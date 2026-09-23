@@ -1,3 +1,8 @@
-export default function Page() {
-  return <h1 className="font-display text-2xl font-extrabold">Signed in</h1>;
+import type { Metadata } from "next";
+import { KitchenBoard } from "@/components/kitchen/KitchenBoard";
+
+export const metadata: Metadata = { title: "Kitchen" };
+
+export default function KitchenPage() {
+  return <KitchenBoard />;
 }

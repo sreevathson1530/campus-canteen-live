@@ -192,3 +192,20 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Printing a bill: only the receipt. */
+@media print {
+  header,
+  nav,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .bill-print {
+    max-width: 80mm;
+    margin: 0 auto;
+  }
+}
