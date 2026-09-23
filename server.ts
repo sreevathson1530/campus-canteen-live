@@ -26,7 +26,13 @@ async function main() {
   const handle = app.getRequestHandler();
   await app.prepare();
 
-  httpServer.on("request", (req, res) => handle(req, res));
+  const trustProxy = process.env.TRUST_PROXY === "1";
+  httpServer.on("request", (req, res) => {
+    // Rate limits key on the client IP. Unless we sit behind a trusted proxy (TRUST_PROXY=1 on
+    // Render/Railway), a client-sent X-Forwarded-For is replaced with the real socket address.
+    if (!trustProxy) req.headers["x-forwarded-for"] = req.socket.remoteAddress ?? "unknown";
+    void handle(req, res);
+  });
 
   const io = new Server<
     import("./src/lib/realtime/events").ClientToServerEvents,
@@ -35,6 +41,9 @@ async function main() {
     import("./src/lib/realtime/events").SocketData
   >(httpServer, {
     path: "/socket.io",
+    // Notice dead phones (walked out of Wi-Fi range) within ~18 s instead of ~45 s.
+    pingInterval: 10_000,
+    pingTimeout: 8_000,
     // Leave other WebSocket upgrades (Next.js dev HMR) alone.
     destroyUpgrade: false,
   });

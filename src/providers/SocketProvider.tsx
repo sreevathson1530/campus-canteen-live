@@ -65,16 +65,24 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       onDown();
     };
     const onOffline = () => setConn((c) => ({ status: "offline", disconnectedSince: c.disconnectedSince ?? Date.now() }));
+    // Back on the network: the old WebSocket may be half-open, so start a fresh connection.
+    // Its "connect" handler refetches every snapshot, recovering anything missed while offline.
+    const onOnline = () => {
+      socket.disconnect();
+      socket.connect();
+    };
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDown);
     socket.on("connect_error", onConnectError);
     window.addEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
     socket.connect();
 
     return () => {
       clearTimeout(offlineTimer);
       window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDown);
       socket.off("connect_error", onConnectError);
