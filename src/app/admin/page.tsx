@@ -1,3 +1,8 @@
-export default function Page() {
-  return <h1 className="font-display text-2xl font-extrabold">Signed in</h1>;
+import type { Metadata } from "next";
+import { Dashboard } from "@/components/admin/Dashboard";
+
+export const metadata: Metadata = { title: "Dashboard" };
+
+export default function AdminPage() {
+  return <Dashboard />;
 }

@@ -1,9 +1,12 @@
 import { createServer } from "node:http";
-import nextEnv from "@next/env";
+import { existsSync } from "node:fs";
 import next from "next";
 import { Server } from "socket.io";
 
-nextEnv.loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
+// Load .env with Node's own loader, not @next/env: @next/env snapshots process.env on first use and
+// restores that snapshot when Next reloads env (e.g. after a new route appears in dev). Calling it here,
+// before Next sets its internal dev flag, would make that reload drop the flag and break every route.
+if (existsSync(".env")) process.loadEnvFile(".env");
 
 async function main() {
   // Fail fast on a missing or weak JWT_SECRET, or OTP_DEV_CODE in production.

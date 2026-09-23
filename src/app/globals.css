@@ -45,6 +45,8 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-bar: var(--chart-bar);
+  --color-chart-bar-muted: var(--chart-bar-muted);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -94,6 +96,9 @@
   --chart-4: #2f7a4f;
   --chart-5: #8e9296;
   --radius: 0.875rem;
+  /* Single-series data mark, validated for lightness, chroma and 3:1 contrast on this surface. */
+  --chart-bar: #2e8b57;
+  --chart-bar-muted: #cfe3d6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -126,6 +131,8 @@
     --border: #34302a;
     --input: #3a362f;
     --ring: #5fbf85;
+    --chart-bar: #4caa73;
+    --chart-bar-muted: #2a3d31;
     color-scheme: dark;
   }
 }

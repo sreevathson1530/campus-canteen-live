@@ -24,6 +24,9 @@ export function ensurePragmas(): Promise<void> {
   return g.__prismaPragmas;
 }
 
+// Every client (the server's and the route handlers') applies the PRAGMAs once.
+if (process.env.NODE_ENV !== "test") void ensurePragmas().catch(() => undefined);
+
 export type Tx = Prisma.TransactionClient;
 
 /** Interactive transaction with generous waits, since transactions queue on the single connection. */
