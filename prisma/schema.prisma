@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  rollNumber   String?        @unique
+  phone        String?        @unique // "+91XXXXXXXXXX"; required for students
+  passwordHash String
+  role         String         @default("STUDENT") // STUDENT | STAFF | ADMIN
+  createdAt    DateTime       @default(now())
+  orders       Order[]
+  otps         OtpChallenge[]
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  sortOrder Int        @default(0)
+  items     MenuItem[]
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  pricePaise  Int
+  isVeg       Boolean     @default(true)
+  imageUrl    String? // rendered 3D still
+  modelKey    String? // procedural 3D model key
+  prepMinutes Int         @default(5)
+  isAvailable Boolean     @default(true)
+  stock       Int? // null = unlimited
+  isArchived  Boolean     @default(false)
+  sortOrder   Int         @default(0)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  updatedAt   DateTime    @updatedAt
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  tokenNumber    Int
+  businessDate   String // "YYYY-MM-DD" in CANTEEN_TIMEZONE
+  status         String      @default("PLACED")
+  version        Int         @default(1)
+  totalPaise     Int
+  note           String?
+  rejectReason   String?
+  idempotencyKey String      @unique
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  items          OrderItem[]
+  bill           Bill?
+  createdAt      DateTime    @default(now())
+  preparingAt    DateTime?
+  readyAt        DateTime?
+  collectedAt    DateTime?
+  closedAt       DateTime? // set on CANCELLED or REJECTED
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([businessDate, tokenNumber])
+  @@index([businessDate, status])
+  @@index([userId, createdAt])
+}
+
+model OrderItem {
+  id             String   @id @default(cuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId     String
+  menuItem       MenuItem @relation(fields: [menuItemId], references: [id])
+  name           String // snapshot at order time
+  unitPricePaise Int // snapshot at order time
+  quantity       Int
+}
+
+model DailyCounter {
+  businessDate String @id
+  lastToken    Int
+}
+
+model Settings {
+  id              Int      @id @default(1)
+  canteenName     String   @default("Campus Canteen")
+  isOpen          Boolean  @default(true)
+  closedMessage   String?
+  minutesPerOrder Int      @default(3)
+  maxActiveOrders Int      @default(3)
+  updatedAt       DateTime @updatedAt
+}
+
+model OtpChallenge {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  phone          String
+  codeHash       String
+  expiresAt      DateTime
+  attempts       Int       @default(0)
+  verifiedAt     DateTime?
+  tokenHash      String?   @unique
+  tokenExpiresAt DateTime?
+  usedAt         DateTime?
+  orderId        String?
+  createdAt      DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([phone, createdAt])
+}
+
+// Created when an order becomes COLLECTED. Every value is a copy; never updated.
+model Bill {
+  id              String     @id @default(cuid())
+  billNumber      String     @unique // CCL-YYYYMMDD-<token>
+  orderId         String     @unique
+  order           Order      @relation(fields: [orderId], references: [id])
+  tokenNumber     Int
+  studentName     String
+  studentPhone    String
+  totalPaise      Int
+  orderedAt       DateTime
+  readyAt         DateTime?
+  collectedAt     DateTime
+  collectedByName String
+  createdAt       DateTime   @default(now())
+  lines           BillLine[]
+
+  @@index([createdAt])
+}
+
+model BillLine {
+  id             String @id @default(cuid())
+  billId         String
+  bill           Bill   @relation(fields: [billId], references: [id], onDelete: Cascade)
+  name           String
+  quantity       Int
+  unitPricePaise Int
+  lineTotalPaise Int
+}
