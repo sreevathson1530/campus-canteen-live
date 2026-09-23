@@ -59,3 +59,47 @@ export async function verifyLogin(email: string, password: string) {
   const ok = await bcrypt.compare(password, user?.passwordHash ?? dummyHash);
   return user && ok ? user : null;
 }
+
+// ---------- Admin ----------
+
+export async function searchUsers(q: string | undefined, page = 1) {
+  const pageSize = 25;
+  const term = q?.trim();
+  const digits = term?.replace(/\D/g, "");
+  const where = term
+    ? {
+        OR: [
+          { name: { contains: term } },
+          { email: { contains: term.toLowerCase() } },
+          { rollNumber: { contains: term.toUpperCase() } },
+          ...(digits && digits.length >= 3 ? [{ phone: { contains: digits } }] : []),
+        ],
+      }
+    : {};
+  const [total, users] = await Promise.all([
+    prisma.user.count({ where }),
+    prisma.user.findMany({ where, orderBy: [{ role: "asc" }, { name: "asc" }], skip: (page - 1) * pageSize, take: pageSize }),
+  ]);
+  return { total, page, pageSize, users: users.map((u) => ({ ...toPublicUser(u), createdAt: u.createdAt.toISOString() })) };
+}
+
+export async function createStaff(input: { name: string; email: string; password: string; phone?: string }) {
+  const passwordHash = await bcrypt.hash(input.password, 10);
+  try {
+    const u = await prisma.user.create({
+      data: { name: input.name, email: input.email, passwordHash, phone: input.phone ?? null, role: "STAFF" },
+    });
+    return toPublicUser(u);
+  } catch (e) {
+    throw uniqueToApiError(e);
+  }
+}
+
+/** An admin can't remove their own ADMIN role, so there is always at least one admin. */
+export async function changeRole(actorId: string, userId: string, role: "STUDENT" | "STAFF" | "ADMIN") {
+  if (actorId === userId && role !== "ADMIN") throw new ApiError("VALIDATION_ERROR", "You can't remove your own admin role");
+  const u = await prisma.user.update({ where: { id: userId }, data: { role } }).catch(() => {
+    throw new ApiError("NOT_FOUND", "User not found");
+  });
+  return toPublicUser(u);
+}
