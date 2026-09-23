@@ -1,0 +1,1455 @@
+Campus Canteen Live -- PRD
+
+ Campus Canteen Live -- Product
+ Requirements Document
+
+   Sep 23, 2026 · @Someone
+
+ 1. Overview and goals
+
+  Campus Canteen Live lets students order canteen food from their phones and watch
+  each order move from kitchen to counter in real time. Every screen (student phone,
+  kitchen tablet, counter TV, admin dashboard) shows the same server state within one
+  second, with no page refresh.
+  Problem. At break time, students crowd the counter and wait without knowing when their
+  food will be ready. Staff have no live view of the queue, and students only find out an item
+  is sold out when they reach the counter.
+  Solution. Students order ahead and get a daily token number. The kitchen sees orders
+  arrive instantly and advances each one with a single tap, while a counter TV shows which
+  tokens are being prepared and which are ready. Stock levels, sold-out items and
+  open/closed status update live for everyone.
+
+ Goals
+
+      A new order appears on the kitchen board within 1 second of being placed (on a local
+      network).
+      Every status change reaches the student's phone and the counter display within 1
+      second, with no refresh.
+      Limited-stock items are never oversold, even when two students order the last unit at
+      the same moment.
+      Clients recover by themselves after a dropped connection and end up showing the
+      correct state.
+      A fresh clone runs locally with one setup command and one dev command, on
+      Windows, macOS and Linux.
+
+ Learning objectives
+
+      WebSockets with Socket.IO: rooms, broadcast versus targeted events, and
+      authenticated connections.
+
+                                                                                                                                                                                                                                                    Page 1 of 33
+Campus Canteen Live -- PRD
+
+    The "HTTP for commands, WebSocket for events" pattern, with the server as the single
+    source of truth.
+    Concurrency control: database transactions, atomic stock decrements and version
+    checks.
+    Resilience: reconnection, resyncing state on reconnect, idempotent requests and out-
+    of-order events.
+    Presence and live aggregates: counting connected screens and pushing throttled live
+    statistics.
+
+Glossary
+
+    Token: a daily order number (101, 102, ...) that the student shows at pickup.
+    Business date: the calendar date in the canteen's timezone. Tokens restart at 101 on
+    each business date.
+    Queue: today's orders in PLACED or PREPARING status, oldest first.
+    Active order: an order in PLACED, PREPARING or READY status.
+    Paise: all money is stored as whole-number paise (1 = 100 paise) and displayed in
+    rupees.
+
+2. Users and roles
+
+The app has three signed-in roles and one public screen. The server assigns roles, and
+registering always creates a STUDENT.
+
+Role     Who                   Main device  Can do                    Home
+                               Phone                                  route
+STUDENT  Anyone who                         Browse the menu, place    /menu
+         registers                          and cancel their own
+                                            orders, track their own   /kitchen
+STAFF    Kitchen and counter   Tablet or    orders live
+         staff (seeded, or     laptop
+         created by an admin)               Run the kitchen board,
+                                            mark pickups, change
+                                            item availability and
+                                            stock, open or close the
+                                            canteen
+
+                                                                      Page 2 of 33
+Campus Canteen Live -- PRD
+
+Role     Who                Main device    Can do                 Home
+                                                                  route
+ADMIN    Canteen manager    Laptop         Everything STAFF can   /admin
+                                           do, plus menu
+DISPLAY  Counter TV (no     TV or monitor  management, users,     /display
+         login)             running a      settings and the live
+                            browser        dashboard
+
+                                           Read-only view of
+                                           preparing and ready
+                                           token numbers
+
+Rules that apply to every role:
+
+    Every page and API route checks the role on the server. Hiding a button in the UI is
+    never the only protection.
+    The display receives token numbers only, never names or items.
+    The kitchen board shows a student's first name only. Roll numbers and emails are
+    visible only to admins.
+    An admin cannot remove their own ADMIN role, so the app always keeps at least one
+    admin.
+
+3. Order lifecycle and core flows
+
+An order moves through six statuses, and only the transitions below are allowed. The
+server rejects any other transition with INVALID_TRANSITION (HTTP 422).
+
+  stateDiagram-v2
+         [*] --> PLACED: student orders
+         PLACED --> PREPARING: staff starts
+         PLACED --> CANCELLED: student cancels
+         PLACED --> REJECTED: staff rejects
+         PREPARING --> REJECTED: staff rejects
+         PREPARING --> READY: staff marks ready
+         READY --> COLLECTED: handed over
+         COLLECTED --> [*]
+         CANCELLED --> [*]
+         REJECTED --> [*]
+
+COLLECTED, CANCELLED and REJECTED are final statuses.
+
+                                                                                      Page 3 of 33
+Campus Canteen Live -- PRD
+
+From                        To         Who can do it         Side effects
+PLACED                      PREPARING
+PLACED                      CANCELLED  STAFF, ADMIN          Set preparingAt
+                            REJECTED
+PLACED or                              The student who owns  Restore stock; set
+PREPARING                   READY      the order             closedAt
+
+PREPARING                              STAFF, ADMIN (reason  Restore stock; set
+                                       required, 3-140       closedAt; the student sees
+READY                                  characters)           the reason
+
+                                       STAFF, ADMIN          Set readyAt; chime on the
+                                                             student's phone and the
+                            COLLECTED STAFF, ADMIN           display
+
+                                                             Set collectedAt
+
+Payment happens at the counter on pickup, by cash or UPI, and is handled outside the
+app. Marking an order COLLECTED means it was paid for and handed over.
+
+Happy path
+
+sequenceDiagram                              order)
+       participant S as Student phone
+       participant API as Route handler
+       participant DB as SQLite
+       participant IO as Socket.IO
+       participant K as Kitchen board
+       participant D as Counter TV
+       S->>API: POST /api/orders
+       API->>DB: transaction (stock, token,
+       API-->>S: 201 order, token 107
+       API->>IO: emit after commit
+       IO-->>K: order:created
+       IO-->>D: display:update
+       K->>API: PATCH status READY
+       API->>IO: emit after commit
+       IO-->>S: order:updated
+       IO-->>D: display:update
+
+Every write goes to an HTTP route handler. Only after the database commits does the
+server push events to the right rooms.
+
+                                                             Page 4 of 33
+Campus Canteen Live -- PRD
+
+ Core flows
+
+   1. Order ahead. A student opens /menu, adds items to the cart, adds an optional note
+      ("less spicy") and places the order. They land on /orders/[id], which shows token 107,
+      their queue position and an estimated wait.
+
+   2. Kitchen processing. The new card appears in the kitchen's New column with a tone.
+      Staff tap Start (the card moves to Preparing), then Ready (the card moves to Ready).
+      The student's phone and the counter TV update each time.
+
+   3. Pickup. The student sees "Ready, show token 107" with a chime and vibration. At the
+      counter, staff type 107 into the Collect box (or tap the card) and the order becomes
+      COLLECTED. It then disappears from the TV.
+
+   4. Sold out mid-rush. Staff switch off Masala Dosa, or its stock reaches 0. Every open
+      menu greys it out instantly. Carts that contain it show a warning, and the server
+      refuses any order that includes it.
+
+   5. Rejection. Staff reject an order with a reason ("Item ran out"). The student sees the
+      reason immediately, and any limited stock is returned.
+
+   6. Canteen closes. Staff flip the canteen to Closed with a message ("Back at 2 PM"). All
+      menus show a banner and disable ordering, and the TV shows a closed screen. Orders
+      already in progress continue normally.
+
+ 4. Functional requirements by screen
+
+  Each screen below must be fully built. Any item marked Live must update from socket
+  events, with no refresh and no polling.
+
+ 4.1 Sign in and register (/login, /register)
+
+      Register with name (2-50 characters), email (unique), roll number (optional, unique)
+      and password (at least 8 characters). Registering always creates a STUDENT and signs
+      them in.
+      Log in with email and password, then redirect to the role's home route (or to ?next= if
+      present and safe).
+      Log out clears the session cookie and disconnects the socket.
+      Visiting a protected page while signed out redirects to /login?next=<path>. Visiting a
+      page for another role redirects to your own home route.
+
+                                                                                                                                                                                                                                                    Page 5 of 33
+Campus Canteen Live -- PRD
+
+ 4.2 Menu (/menu), student
+
+      Items are grouped under sticky category tabs. Each card shows the name, price in , a
+      veg or non-veg marker (green or red symbol plus a text label), a short description and
+      an image (or a coloured tile showing the item's initial).
+      An "Only N left" badge appears when stock is 5 or fewer. A "Sold out" state (greyed
+      out, add button disabled) appears when the item is unavailable or its stock is 0.
+      A quantity stepper allows up to 10 of one item, and an order can hold up to 10 different
+      items.
+      A sticky bottom bar shows the item count and total, and opens the cart sheet. The
+      sheet lists lines, a note field (up to 140 characters), the total and a Place order button.
+      The cart persists in localStorage.
+      Live: changes to availability, stock, price and name update the cards instantly. Cart
+      lines for items that became unavailable show "No longer available" and block checkout
+      until removed. A price change updates the cart total and shows a small "Price updated"
+      notice.
+      Live: when the canteen closes, a banner shows the closed message and Place order is
+      disabled. Reopening removes the banner.
+      Place order sends an Idempotency-Key header, generated once when the cart sheet
+      opens. Success navigates to /orders/[id]. Error codes show a clear message, and
+      OUT_OF_STOCK names the item and refreshes the menu.
+      A student can have at most 3 active orders at once (a setting).
+
+ 4.3 Order tracker (/orders/[id]), student
+
+      A large token number, a status stepper (Placed  Preparing  Ready  Collected) with
+      timestamps, the items, the note and the total.
+      Live: while the order is PLACED or PREPARING, a queue card shows "You are #3 in the
+      queue · about 9 min".
+      Live: when the order is READY, a full-width green state says "Ready, show token 107 at
+      the counter". It plays a chime, vibrates (navigator.vibrate) and shows a browser
+      Notification if the tab is hidden and permission was granted. Permission is requested
+      from a button, never on page load.
+      Live: a REJECTED order shows the reason and "You have not been charged". A
+      CANCELLED order shows a cancelled state.
+      A Cancel button with a confirmation dialog is visible only while the order is PLACED.
+      An aria-live region announces every status change.
+
+                                                                                                                                                                                                                                                    Page 6 of 33
+Campus Canteen Live -- PRD
+
+ 4.4 My orders (/orders), student
+
+      Active orders appear first with live status chips, followed by the last 30 days of history,
+      20 per page.
+
+ 4.5 Kitchen board (/kitchen), staff and admin
+
+      Three columns, New (PLACED), Preparing and Ready, each with a live count in its
+      header. Cards are sorted oldest first.
+      Each card shows the token, the student's first name, items with quantities, the note
+      highlighted, the total, and an elapsed timer that ticks every second. The timer is
+      neutral under 10 minutes, amber from 10 to 20 minutes and red after 20 minutes.
+      One primary button per card (Start, then Ready, then Collected) and a menu with
+      Reject. Reject opens a dialog with quick reasons ("Item ran out", "Kitchen closing") or a
+      custom reason.
+      Live: a new order flashes for 3 seconds and plays a tone, and the browser tab title
+      shows "(2) New · Kitchen".
+      Actions are optimistic: the card moves immediately. On VERSION_CONFLICT the card
+      reverts to the server's state and a toast says "Already updated by another staff
+      member".
+      A Collect box at the top accepts a token number and Enter, and marks that READY
+      order COLLECTED (with an error if it is not READY).
+      READY cards older than 15 minutes show an "Uncollected" badge. A "Done today"
+      drawer lists the last 20 COLLECTED, CANCELLED and REJECTED orders.
+      A sound toggle is included. Sound starts only after a click on "Enable sound", because
+      browsers block autoplay.
+      If the socket has been disconnected for more than 3 seconds, a banner says
+      "Reconnecting, board may be out of date".
+
+ 4.6 Stock and status (/kitchen/stock), staff and admin
+
+      An Open/Closed switch for the canteen, with an optional closed message.
+      Every item has an availability switch and a stock input (blank means unlimited).
+      Changes save automatically after 500 ms and broadcast live. Rows with stock of 5 or
+      fewer are highlighted.
+
+                                                                                                                                                                                                                                                    Page 7 of 33
+Campus Canteen Live -- PRD
+
+ 4.7 Counter display (/display), public
+
+      Full-screen layout for 1920×1080 with the canteen name and a live clock in the header.
+      Two large columns, "Preparing" and "Ready for pickup", show token numbers in very
+      large type. Ready tokens are listed newest first.
+      Live: a token that becomes ready pulses for 10 seconds and plays a chime. It
+      disappears when collected.
+      A side strip shows a QR code for NEXT_PUBLIC_APP_URL/menu with "Scan to order".
+      Live: when the canteen is closed, a full-screen "Canteen closed" state shows the
+      message.
+      On first load, a "Click to start" overlay enables audio and fullscreen.
+      A small connection dot sits in a corner. The display never shows names or items.
+
+ 4.8 Live dashboard (/admin), admin
+
+      Live: stat cards for orders today, revenue today (sum of COLLECTED totals), active
+      orders, average prep time today (from placed to ready) and cancelled plus rejected
+      today.
+      Live: a bar chart of orders per hour today (Recharts) and the top 5 items today by
+      quantity.
+      Live: presence showing the number of kitchen screens, displays and students
+      currently online.
+
+ 4.9 Menu management (/admin/menu), admin
+
+      Create, edit and reorder categories (name, sort order) and items (name, description,
+      price in , veg flag, category, image URL, prep minutes, stock, availability).
+      Deleting an item archives it: it is hidden from the menu but kept for order history.
+      Live: every change reaches open menus instantly.
+
+ 4.10 Users (/admin/users) and settings (/admin/settings), admin
+
+      Users: search by name, email or roll number; create STAFF accounts; change a user's
+      role.
+      Settings: canteen name, minutes per order used for wait estimates (default 3),
+      maximum active orders per student (default 3), and open/closed with a message.
+
+                                                                                                                                                                                                                                                    Page 8 of 33
+Campus Canteen Live -- PRD
+
+4.11 Shared UI
+
+    Every signed-in page has a header connection badge: Live (green), Reconnecting
+    (amber) or Offline (red), each with a text label.
+    Toasts for errors and important events. Mobile-first student pages from 360 px wide,
+    kitchen pages optimised for landscape tablets, and dark mode that follows the system
+    setting.
+
+5. API and real-time contract
+
+All writes go through HTTP route handlers, and the server then pushes events over
+Socket.IO. Clients never write through the socket, and they never choose which rooms
+they join.
+
+5.1 REST endpoints
+
+Bodies are JSON and validated with Zod. Errors always use the shape { "error": {
+"code": "OUT_OF_STOCK", "message": "...", "details": {} } } .
+
+Method  Path                    Allowed roles  Purpose
+POST    /api/auth/register      Public
+                                               Create a STUDENT and
+POST    /api/auth/login         Public         set the session cookie
+POST    /api/auth/logout        Signed in
+GET     /api/auth/me            Signed in      Set the session cookie
+GET     /api/menu               Public
+                                               Clear the session cookie
+POST    /api/orders             STUDENT
+                                               Current user
+GET     /api/orders?scope=mine  STUDENT
+                                               Categories, available
+                                               and sold-out items,
+                                               settings
+
+                                               Place an order;
+                                               Idempotency-Key
+                                               header required
+
+                                               Own orders: active first,
+                                               then history (paginated)
+
+                                               Page 9 of 33
+Campus Canteen Live -- PRD
+
+Method  Path                        Allowed roles         Purpose
+GET     /api/orders?scope=board     STAFF, ADMIN
+                                                          Today's PLACED,
+GET     /api/orders/[id]            Owner, STAFF, ADMIN   PREPARING and READY
+        /api/orders/[id]/status                           orders, plus the last 20
+PATCH   /api/orders/collect         As in the transition  closed
+        /api/display                table
+POST    /api/menu/items/[id]/stock  STAFF, ADMIN          One order, plus queue
+        /api/settings                                     position and estimated
+GET     /api/admin/categories       Public                wait
+PATCH                               STAFF, ADMIN
+                                    STAFF (isOpen,        Body: { to,
+PATCH                               closedMessage only),
+                                    ADMIN (all fields)    expectedVersion,
+GET,                                ADMIN                 reason? }
+POST
+PATCH,                                                    Body: { tokenNumber
+DELETE                                                    } ; moves today's READY
+GET,                                                      order to COLLECTED
+POST                                                      DisplaySnapshot
+PATCH,
+DELETE                                                    Body: { isAvailable?,
+GET
+GET,                                                      stock? }
+POST
+PATCH                                                     Update settings
+
+                                                          List or create categories
+
+        /api/admin/categories/[id] ADMIN                  Edit, or delete if it has no
+                                                          items
+        /api/admin/items            ADMIN
+                                                          List or create items
+
+        /api/admin/items/[id]       ADMIN                 Edit; DELETE archives
+        /api/admin/stats            ADMIN                 the item
+        /api/admin/users            ADMIN
+        /api/admin/users/[id]       ADMIN                 StatsDTO
+
+                                                          Search users; create
+                                                          STAFF
+
+                                                          Change role
+
+                                                          Page 10 of 33
+Campus Canteen Live -- PRD
+
+Error code                                HTTP  When
+VALIDATION_ERROR                          400   Body or query fails Zod validation
+UNAUTHORIZED                              401   No valid session
+FORBIDDEN                                 403   Wrong role or not the order's owner
+NOT_FOUND                                 404   Unknown id or token
+CANTEEN_CLOSED                            409   Ordering while the canteen is closed
+ITEM_UNAVAILABLE                          409   Item missing, archived or switched off
+OUT_OF_STOCK                              409   Not enough stock left; details include the item
+                                                name and remaining count
+TOO_MANY_ACTIVE_ORDERS                    409   The student already has the maximum number of
+                                                active orders
+VERSION_CONFLICT                          409   expectedVersion is stale; details include the
+                                                current OrderDTO
+INVALID_TRANSITION                        422   Status change not allowed
+RATE_LIMITED                              429   Too many requests
+
+5.2 Socket connection and authentication
+
+    Socket.IO is attached to the same HTTP server and port as Next.js, at path /socket.io.
+    The browser sends the session cookie automatically, because the socket is on the
+    same origin. Server middleware verifies the JWT and sets socket.data.user = { id,
+    role, firstName } .
+    The counter TV connects with auth: { client: "display" } and no login. It joins
+    only the public and display rooms.
+    Any other connection without a valid session is rejected with the error
+    UNAUTHORIZED.
+    After connecting, the server joins each socket to rooms based on its role.
+
+Room                        Members             Used for
+public                      Every socket        Menu and canteen status
+
+                                                                         Page 11 of 33
+Campus Canteen Live -- PRD
+
+Room                        Members                  Used for
+display                     Display sockets          Token board snapshots
+user:{userId}               All tabs of one student  Their order updates and queue position
+kitchen                     STAFF and ADMIN sockets  New and updated orders, presence
+admin                       ADMIN sockets            Live stats and presence
+
+5.3 Server-to-client events
+
+Event                       Room(s)                  Payload                Sent when
+order:created               kitchen                  OrderDTO
+order:updated               kitchen, user:           OrderDTO               An order is placed
+queue:update                {ownerId}
+                            user:{userId} of         { orderId, position,   Any status change
+display:update              each student with a      etaMinutes }
+                            queued order                                    The queue gains or
+menu:item-                  display                  DisplaySnapshot (full  loses an order
+updated                                              replacement)
+menu:changed                public                                          The PLACED,
+                                                     MenuItemDTO            PREPARING or
+canteen:status              public                                          READY sets change,
+                                                     { reason }             or open/closed
+                            public                                          changes
+                                                     { isOpen,
+                                                     closedMessage,         An item's availability,
+                                                     canteenName }          stock, price or details
+                                                                            change
+
+                                                                            Items or categories
+                                                                            are created, archived
+                                                                            or reordered; clients
+                                                                            refetch /api/menu
+
+                                                                            Settings change
+
+                                                                                             Page 12 of 33
+Campus Canteen Live -- PRD
+
+Event                       Room(s)  Payload                 Sent when
+stats:update                admin    StatsDTO
+                                                             Any order change,
+presence:update admin, kitchen       { kitchen, display,     throttled to at most
+                                     students }              once per second
+
+                                                             Any socket connects
+                                                             or disconnects
+
+There are no custom client-to-server events. Clients only connect and receive.
+
+5.4 Shared payload types
+
+Define these types once in src/lib/realtime/events.ts, and use them for Socket.IO's typed
+ServerToClientEvents on both the server and the client.
+
+export type OrderStatus = "PLACED" | "PREPARING" | "READY" | "COLLECTED" |
+"CANCELLED" | "REJECTED";
+
+export interface OrderDTO {                                  number  }[];
+   id: string;
+   tokenNumber: number;
+   status: OrderStatus;
+   version: number;
+   totalPaise: number;
+   note: string | null;
+   rejectReason: string | null;
+   studentFirstName: string;
+   items: { name: string; quantity: number; unitPricePaise:
+   createdAt: string; // ISO strings for every date
+   preparingAt: string | null;
+   readyAt: string | null;
+   collectedAt: string | null;
+   closedAt: string | null;
+
+}
+
+export interface DisplaySnapshot {   string  }[];  // tokens, oldest first
+   canteenName: string;                            // newest first
+   isOpen: boolean;
+   closedMessage: string | null;
+   preparing: number[];
+   ready: { token: number; readyAt:
+
+}
+
+                                                                                Page 13 of 33
+Campus Canteen Live -- PRD
+
+export interface MenuItemDTO {
+   id: string; categoryId: string; name: string; description: string | null;
+   pricePaise: number; isVeg: boolean; imageUrl: string | null;
+   isAvailable: boolean; stock: number | null; sortOrder: number;
+
+}
+
+export interface StatsDTO {
+
+   ordersToday: number; revenueTodayPaise: number; activeOrders: number;
+
+   avgPrepSecondsToday: number | null; cancelledOrRejectedToday: number;
+
+   ordersPerHour: { hour: number; count: number }[]; // 0-23, canteen
+
+timezone
+
+   topItems: { name: string; quantity: number }[];  // top 5
+
+   presence: { kitchen: number; display: number; students: number };
+
+}
+
+5.5 Client rules
+
+1. Each browser tab opens one socket inside a SocketProvider, and the socket
+    disconnects on logout.
+
+2. Every page loads a snapshot over REST with TanStack Query, then applies socket
+    events on top of it.
+
+3. On every connect event, both the first connection and every reconnect, the client
+    invalidates its queries and refetches the snapshot. This makes it correct after missed
+    events.
+
+4. Events patch the TanStack Query cache with setQueryData . Components never keep
+    a separate copy of server data.
+
+5. Apply order:updated only if the payload's version is greater than the cached version.
+    Stale or out-of-order events are dropped.
+
+6. display:update replaces the display's state completely, so applying it twice is
+    harmless.
+
+5.6 Emitting from route handlers
+
+    server.ts creates the Socket.IO instance and stores it on globalThis.__io . getIO()
+    in src/lib/realtime/io.ts reads it from there. This is required because Next.js can load
+    route handlers in separate module instances, so a normal module-level singleton would
+    be undefined inside them.
+
+                                                                          Page 14 of 33
+Campus Canteen Live -- PRD
+
+   All emits go through functions in src/lib/realtime/emitters.ts: emitOrderCreated,
+   emitOrderUpdated, emitDisplaySnapshot, emitQueueUpdates,
+   emitMenuItemUpdated, emitMenuChanged, emitCanteenStatus, emitPresence and
+   scheduleStatsUpdate.
+
+   Emit only after the database transaction has committed, never inside it.
+
+6. Data model
+
+The app uses SQLite through Prisma 6. Roles and statuses are stored as strings and
+validated with Zod, and all money is stored as whole-number paise.
+
+generator client {
+   provider = "prisma-client-js"
+
+}
+
+datasource   db {
+   provider  = "sqlite"
+   url       = env("DATABASE_URL")
+
+}
+
+model User {
+
+   id                       String @id @default(cuid())
+
+   name                     String
+
+   email                    String @unique
+
+   rollNumber String? @unique
+
+   passwordHash String
+
+   role                     String @default("STUDENT") // STUDENT | STAFF | ADMIN
+
+   createdAt DateTime @default(now())
+
+   orders                   Order[]
+
+}
+
+model Category {
+
+   id                       String      @id @default(cuid())
+                                        @unique
+   name                     String      @default(0)
+
+   sortOrder Int
+
+   items                    MenuItem[]
+
+}
+
+model MenuItem {
+
+   id                       String      @id @default(cuid())
+
+   name                     String
+
+                                                                                    Page 15 of 33
+Campus Canteen Live -- PRD
+
+   description String?
+
+   pricePaise Int
+
+   isVeg                    Boolean  @default(true)
+
+   imageUrl String?
+
+   prepMinutes Int                   @default(5)
+
+   isAvailable Boolean               @default(true)
+
+   stock                    Int?     // null = unlimited
+
+   isArchived Boolean                @default(false)
+
+   sortOrder Int                     @default(0)
+
+   categoryId String
+
+   category Category @relation(fields: [categoryId], references: [id])
+
+   orderItems OrderItem[]
+
+   updatedAt DateTime @updatedAt
+
+}
+
+model Order {               String       @id @default(cuid())                     [id])
+   id                       Int          // "YYYY-MM-DD" in CANTEEN_TIMEZONE
+   tokenNumber              String       @default("PLACED")
+   businessDate             String       @default(1)
+   status                   Int
+   version                  Int          @unique
+   totalPaise               String?      @relation(fields: [userId], references:
+   note                     String?      @default(now())
+   rejectReason             String
+   idempotencyKey           String       // set on CANCELLED or REJECTED
+   userId                   User         @updatedAt
+   user                     OrderItem[]
+   items                    DateTime
+   createdAt                DateTime?
+   preparingAt              DateTime?
+   readyAt                  DateTime?
+   collectedAt              DateTime?
+   closedAt                 DateTime
+   updatedAt
+
+   @@unique([businessDate, tokenNumber])
+   @@index([businessDate, status])
+   @@index([userId, createdAt])
+}
+
+model OrderItem {
+
+   id                       String   @id @default(cuid())
+
+   orderId                  String
+
+                                                                                  Page 16 of 33
+Campus Canteen Live -- PRD
+
+   order                    Order     @relation(fields: [orderId], references: [id],
+
+onDelete: Cascade)                    @relation(fields: [menuItemId], references: [id])
+                                      // snapshot at order time
+   menuItemId               String    // snapshot at order time
+
+   menuItem                 MenuItem
+
+   name                     String
+
+   unitPricePaise Int
+
+   quantity                 Int
+
+}
+
+model DailyCounter {
+   businessDate String @id
+   lastToken Int
+
+}
+
+model Settings {            Int       @id @default(1)   Canteen")
+   id                       String    @default("Campus
+   canteenName              Boolean   @default(true)
+   isOpen                   String?
+   closedMessage            Int       @default(3)
+   minutesPerOrder          Int       @default(3)
+   maxActiveOrders          DateTime  @updatedAt
+   updatedAt
+
+}
+
+An item can be ordered only when isAvailable is true, isArchived is false, and stock
+is null or greater than 0. Order items keep a snapshot of the name and price, so later menu
+edits never change past orders.
+
+6.1 Placing an order (src/lib/orders/service.ts: placeOrder)
+
+1. If an order with the same idempotencyKey already exists for this user, return it with
+    HTTP 200 and create nothing new.
+
+2. Validate the body with Zod: 1-10 lines, each with a quantity from 1 to 10, and a note of
+    up to 140 characters. Load Settings; if the canteen is closed, return
+    CANTEEN_CLOSED.
+
+3. Count the user's active orders today. If the count is at or above maxActiveOrders,
+    return TOO_MANY_ACTIVE_ORDERS.
+
+4. Inside prisma.$transaction(async (tx) => ...) :
+     a. Load the requested items. If any is missing, archived or unavailable, throw
+        ITEM_UNAVAILABLE.
+
+                                                                   Page 17 of 33
+Campus Canteen Live -- PRD
+
+       b. For each item with limited stock, run tx.menuItem.updateMany({ where: { id,
+          stock: { gte: qty } }, data: { stock: { decrement: qty } } }) . If the
+          returned count is 0, throw OUT_OF_STOCK. This conditional update is what
+          prevents overselling.
+
+       c. Compute the total from database prices only. Prices sent by the client are ignored.
+       d. Get the token with tx.dailyCounter.upsert({ where: { businessDate },
+
+           create: { businessDate, lastToken: 101 }, update: { lastToken: {
+
+          increment: 1 } } }) .
+       e. Create the Order and its OrderItems.
+   5. After the commit, call emitOrderCreated, emitDisplaySnapshot,
+      emitMenuItemUpdated (for each item whose stock changed), emitQueueUpdates and
+      scheduleStatsUpdate. Return HTTP 201 with the OrderDTO.
+
+ 6.2 Changing status (src/lib/orders/service.ts: transitionStatus)
+
+   1. Load the order. Check the actor's role or ownership and the transition table in section
+      3. Return FORBIDDEN or INVALID_TRANSITION if either check fails.
+
+   2. Inside a transaction, run updateMany({ where: { id, version: expectedVersion,
+
+       status: currentStatus }, data: { status: to, version: { increment: 1 },
+
+      <timestamp>: now } }) . If the count is 0, return VERSION_CONFLICT with the
+      current OrderDTO.
+   3. For CANCELLED or REJECTED, increment stock back for every limited item in the
+      order, in the same transaction.
+   4. After the commit, call emitOrderUpdated, emitDisplaySnapshot, emitQueueUpdates,
+      emitMenuItemUpdated (if stock was restored) and scheduleStatsUpdate.
+
+ 6.3 Queue position and wait estimate
+
+      The queue is today's PLACED and PREPARING orders, sorted by createdAt.
+      position = index in the queue + 1.
+      etaMinutes = position × Settings.minutesPerOrder.
+      Recompute after every change to the queue, and send queue:update to each student
+      who has an order in it.
+
+                                                                                                                                                                                                                                                  Page 18 of 33
+Campus Canteen Live -- PRD
+
+7. Tech stack and architecture
+
+The whole app is one Next.js project running in a single Node process. A custom server
+lets Next.js and Socket.IO share port 3000.
+
+Layer                       Choice                               Why
+Framework                   Next.js, latest stable, App Router,
+Real-time                   TypeScript in strict mode            Pages, server components and
+Custom server               Socket.IO 4.x server and socket.io-  route handlers in one project
+Database                    client
+                            server.ts run with tsx               Rooms, automatic reconnection,
+Auth                                                             long-polling fallback
+                            SQLite with Prisma 6.x (pin
+Validation                  prisma@^6 and                        Attaches Socket.IO to the same
+Server data on              @prisma/client@^6)                   HTTP server as Next.js
+the client                  JWT (HS256) signed with jose,
+Cart                        stored in an httpOnly cookie;        No setup needed; can switch to
+UI                          passwords hashed with bcryptjs       PostgreSQL by changing the
+Charts                      Zod                                  provider
+QR code
+Dates                       TanStack Query v5                    Works in route handlers and in
+Tests                                                            the socket handshake
+                            Zustand with persist
+                                                                 One set of schemas shared by
+                            Tailwind CSS, shadcn/ui, lucide-     the API and the forms
+                            react icons, sonner toasts
+                            Recharts                             A cache that socket events
+                            qrcode                               patch directly
+                            date-fns and date-fns-tz
+                                                                 Local cart that survives a
+                            Vitest for unit and integration,     refresh
+                            Playwright for end-to-end
+                                                                 Fast, consistent, accessible
+                                                                 components
+
+                                                                 Admin dashboard
+
+                                                                 "Scan to order" on the display
+
+                                                                 Business date and hours in the
+                                                                 canteen timezone
+
+                                                                 Includes multi-browser real-
+                                                                 time tests
+
+                                                                 Page 19 of 33
+Campus Canteen Live -- PRD
+
+Layer                       Choice                       Why
+Tooling                     ESLint, Prettier, cross-env
+                                                         Scripts that also work on
+                                                         Windows
+
+  flowchart LR
+         S[Student phone] -->|HTTP commands| N
+         K[Kitchen tablet] -->|HTTP commands| N
+         A[Admin laptop] -->|HTTP commands| N
+         N[Next.js custom server<br/>pages + route handlers] --> DB[(Prisma +
+
+  SQLite)]
+         N -->|emit after commit| IO[Socket.IO<br/>same port]
+         IO -->|events| S
+         IO -->|events| K
+         IO -->|events| A
+         IO -->|events| D[Counter TV]
+
+Commands go in over HTTP; events come back out over Socket.IO to the right rooms.
+
+Architecture principles
+
+1. The server is the single source of truth. Clients only render server state, apart from
+    short-lived optimistic updates on the kitchen board.
+
+2. HTTP for commands, WebSocket for events. Every write is validated, authorized and
+    transactional, and the fan-out happens only after commit.
+
+3. Snapshot plus events. Each page loads a snapshot over REST, patches it with events,
+    and refetches the snapshot whenever the socket reconnects.
+
+4. One process. Running more than one server instance would need the Socket.IO Redis
+    adapter, which is out of scope.
+
+                                                                                    Page 20 of 33
+Campus Canteen Live -- PRD
+
+server.ts outline
+
+import  { createServer } from "node:http";
+import  next from "next";
+import  { Server } from "socket.io";
+import  { registerSocketServer } from "./src/lib/realtime/socket-server";
+
+const  dev = process.env.NODE_ENV !== "production";
+const  hostname = process.env.BIND_HOST ?? "0.0.0.0";
+const  port = Number(process.env.PORT ?? 3000);
+const  app = next({ dev, hostname, port });
+const  handle = app.getRequestHandler();
+
+app.prepare().then(() => {
+   const httpServer = createServer((req, res) => handle(req, res));
+   const io = new Server(httpServer, { path: "/socket.io" });
+   (globalThis as any).__io = io;
+   registerSocketServer(io); // auth middleware, room joins, presence
+   httpServer.listen(port, hostname, () => console.log(`Ready on
+
+http://localhost:${port}`));
+   // On SIGINT/SIGTERM: io.close(), httpServer.close(), prisma.$disconnect()
+
+});
+
+Deployment and demo
+
+    The app runs anywhere that keeps a Node process alive, such as Render, Railway or a
+    VPS. Vercel's serverless functions cannot hold WebSocket connections, so Vercel is
+    not a target.
+    For a classroom demo, the server listens on 0.0.0.0. Phones on the same Wi-Fi open
+     http://<laptop-LAN-IP>:3000 , and NEXT_PUBLIC_APP_URL is set to that address so
+    the display's QR code works.
+
+8. Non-functional requirements
+
+The app must stay correct under simultaneous actions and dropped connections, not just
+on the happy path.
+
+                                                                           Page 21 of 33
+Campus Canteen Live -- PRD                   Protection
+
+ 8.1 Concurrency                             Conditional updateMany with stock >= qty
+                                             inside the order transaction; exactly one order
+    Scenario                                 succeeds and the other gets OUT_OF_STOCK
+    Two students order the last unit at the
+    same moment                              expectedVersion check; one succeeds and
+    Two staff tap Ready on the same card     the other gets VERSION_CONFLICT, then
+                                             shows server state
+    Student double-taps Place order, or the
+    network retries                          Idempotency-Key header plus a unique
+    Two orders need a token at once          idempotencyKey column; one order only
+
+    Events arrive out of order               DailyCounter upsert inside the transaction
+    SQLite write contention                  plus @@unique([businessDate,
+
+                                             tokenNumber])
+
+                                             The client ignores any order event whose
+                                             version is not newer than its cache
+
+                                             Enable WAL mode and a 5-second busy
+                                             timeout at startup, using
+
+                                             $queryRawUnsafe("PRAGMA journal_mode =
+
+                                             WAL") and PRAGMA busy_timeout = 5000
+
+8.2 Performance
+
+    On a local network, 95% of events reach clients within 1 second of the write.
+    The app handles 200 concurrent sockets on a normal laptop.
+    The student menu is usable within 2 seconds on a mid-range phone over 4G.
+    stats:update is throttled to once per second, and stock inputs are debounced by 500
+    ms.
+
+8.3 Resilience
+
+    Socket.IO reconnects automatically with its default backoff. The header badge shows
+    Live, Reconnecting or Offline.
+    Every reconnect triggers a snapshot refetch (section 5.5), so updates missed while
+    offline still appear.
+
+                                             Page 22 of 33
+Campus Canteen Live -- PRD
+
+      After a server restart, all clients reconnect and resync without any manual refresh.
+      On SIGINT or SIGTERM, the server closes Socket.IO and the HTTP server, then
+      disconnects Prisma.
+      Every route handler catches errors and returns the standard error shape. Stack traces
+      are never sent to clients.
+
+ 8.4 Security and privacy
+
+      The session JWT (7-day expiry, claims sub , role and name ) lives in an httpOnly,
+      SameSite=Lax cookie, marked Secure in production. JWT_SECRET must be at least 32
+      characters, and the server refuses to start without it.
+      Passwords are hashed with bcryptjs (cost 10). Login errors never reveal whether an
+      email exists.
+      Every route handler and server layout checks the role through requireUser() or
+       requireRole(...roles) . Role checks live in server components and route handlers,
+      not in Next.js middleware.
+      Mutating endpoints accept only application/json , which, together with SameSite
+      cookies, blocks cross-site form posts.
+      In-memory rate limits: POST /api/orders allows 5 per minute per user, and login allows
+      10 per minute per IP. Excess requests return RATE_LIMITED.
+      The ?next= redirect accepts only relative paths.
+      The display gets token numbers only, and the kitchen gets first names only.
+
+ 8.5 Accessibility and compatibility
+
+      WCAG 2.1 AA contrast, a keyboard-operable kitchen board and visible focus rings.
+      Status is never shown by colour alone: every state has text or an icon. Status changes
+      are announced with aria-live.
+       prefers-reduced-motion turns off pulses and slide animations.
+      Supports the latest Chrome, Edge, Firefox and Safari, Chrome on Android and Safari on
+      iOS.
+      Runs on Node.js 20 or later, on Windows, macOS and Linux.
+      Times are shown in the canteen timezone (default Asia/Kolkata), and prices are shown
+      as  with the Indian number format.
+
+                                                                                                                                                                                                                                                  Page 23 of 33
+Campus Canteen Live -- PRD
+
+9. Project structure, setup and seed data
+
+A fresh clone must run with npm install , npm run setup and npm run dev , and
+nothing else.
+
+9.1 Folder structure
+
+campus-canteen-live/                 # Next.js + Socket.IO custom server
+ server.ts
+ prisma/
+  schema.prisma
+
+  seed.ts                            # idempotent (upserts)
+ scripts/
+
+  simulate-orders.ts                 # demo traffic generator
+
+ src/
+
+  app/
+
+   page.tsx                          # redirects to the role's home
+
+   (auth)/login/page.tsx
+
+   (auth)/register/page.tsx
+
+   (student)/layout.tsx              # requireRole("STUDENT")
+
+   (student)/menu/page.tsx
+
+   (student)/orders/page.tsx
+
+   (student)/orders/[id]/page.tsx
+
+   kitchen/layout.tsx                # requireRole("STAFF", "ADMIN")
+
+   kitchen/page.tsx
+
+   kitchen/stock/page.tsx
+
+   display/page.tsx                  # public
+
+   admin/layout.tsx                  # requireRole("ADMIN")
+
+   admin/page.tsx
+
+   admin/menu/page.tsx
+
+   admin/users/page.tsx
+
+   admin/settings/page.tsx
+
+   api/...                           # route handlers from section 5.1
+  components/                        # ui/ (shadcn), menu/, orders/,
+
+kitchen/, display/, admin/, shared/
+
+  hooks/                             # useSocketEvent, useConnectionStatus,
+
+useSound (Web Audio tones)           # QueryProvider, SocketProvider
+  providers/                         # Zustand cart with persist
+  stores/cart.ts
+
+  lib/
+
+   db.ts                             # Prisma singleton + SQLite PRAGMAs
+                                     # JWT, cookies, requireUser, requireRole
+   auth.ts                           # error helper, JSON guard, rate limiter
+
+   api.ts
+
+                                                                               Page 24 of 33
+Campus Canteen Live -- PRD
+
+          validators.ts                        # Zod schemas
+                                               # Prisma rows  DTOs
+          dto.ts                               # paise   formatting
+                                               # businessDate(), canteen timezone
+          money.ts                             # placeOrder, transitionStatus,
+
+          time.ts                              # event names + payload types (section
+                                               # getIO() via globalThis
+helpers                                        # auth middleware, room joins, presence
+
+          orders/service.ts
+
+collectByToken, getQueue
+
+          menu/service.ts
+
+          stats.ts
+
+          realtime/
+
+                             events.ts
+
+5.4)                         io.ts
+                             socket-server.ts
+
+
+                             emitters.ts
+
+ tests/
+
+  unit/
+
+  integration/
+
+  e2e/
+ .env.example
+ DECISIONS.md
+
+ README.md
+
+Sounds are generated with the Web Audio API (short oscillator tones), so the project
+needs no audio files.
+
+9.2 Environment variables
+
+Variable                    Example            Purpose
+DATABASE_URL                file:./dev.db
+JWT_SECRET                  32 or more random  SQLite database file
+                            characters
+PORT                        3000               Signs session tokens; the server
+BIND_HOST                   0.0.0.0            refuses to start without it
+
+CANTEEN_TIMEZONE Asia/Kolkata                  HTTP and Socket.IO port
+
+                                               Network interface to listen on;
+                                               0.0.0.0 lets phones on the same
+                                               Wi-Fi connect
+
+                                               Business date, tokens and
+                                               displayed times
+
+                                               Page 25 of 33
+Campus Canteen Live -- PRD
+
+Variable                    Example                   Purpose
+NEXT_PUBLIC_APP_URL         http://192.168.1.20:3000  QR code target and absolute links
+
+9.3 Scripts (package.json)
+
+  {
+      "scripts": {
+         "dev": "tsx server.ts",
+         "build": "prisma generate && next build",
+         "start": "cross-env NODE_ENV=production tsx server.ts",
+         "setup": "prisma migrate dev --name init && npm run db:seed",
+         "db:seed": "tsx prisma/seed.ts",
+         "db:reset": "prisma migrate reset --force",
+         "simulate": "tsx scripts/simulate-orders.ts",
+         "lint": "eslint .",
+         "typecheck": "tsc --noEmit",
+         "test": "vitest run",
+         "test:e2e": "playwright test"
+      },
+      "prisma": { "seed": "tsx prisma/seed.ts" }
+
+  }
+
+Setup for a fresh clone:
+
+1. npm install
+2. Copy .env.example to .env and set JWT_SECRET.
+3. npm run setup (creates the database and seeds it)
+4. npm run dev , then open http://localhost:3000
+
+9.4 Seed accounts
+
+Role     Email                 Password
+ADMIN    admin@canteen.test    admin123
+STAFF    kitchen@canteen.test  kitchen123
+STUDENT  asha@canteen.test     student123
+STUDENT  ravi@canteen.test     student123
+
+                                                                        Page 26 of 33
+Campus Canteen Live -- PRD
+
+Role       Email                              Password
+STUDENT    meena@canteen.test                 student123
+
+9.5 Seed menu
+
+Category                    Item              Price ()  Type     Stock
+Breakfast                   Idli (2 pcs)      30        Veg      Unlimited
+Breakfast                   Masala Dosa       50        Veg      Unlimited
+Breakfast                   Pongal            40        Veg      Unlimited
+Breakfast                   Poori Masala      45        Veg      Unlimited
+Meals                       Veg Meals         70        Veg      40
+Meals                       Curd Rice         40        Veg      Unlimited
+Meals                       Lemon Rice        40        Veg      Unlimited
+Meals                       Chicken Biryani   110       Non-veg  25
+Meals                       Egg Fried Rice    80        Non-veg  Unlimited
+Snacks                      Samosa            15        Veg      20
+Snacks                      Veg Puff          20        Veg      15
+Snacks                      Egg Puff          25        Non-veg  12
+Snacks                      Onion Bajji       25        Veg      Unlimited
+Beverages                   Filter Coffee     15        Veg      Unlimited
+Beverages                   Tea               12        Veg      Unlimited
+Beverages                   Fresh Lime Juice  25        Veg      Unlimited
+
+The seed also creates the single Settings row (canteen open, 3 minutes per order, 3 active
+orders per student). It creates no orders.
+
+                                                                            Page 27 of 33
+Campus Canteen Live -- PRD
+
+ 9.6 Demo traffic simulator
+
+   npm run simulate -- --url http://localhost:3000 --interval 5 --count 20 --
+  kitchen
+
+      Logs in as the three seeded students through /api/auth/login and keeps their cookies.
+      Places a random order of 1-3 items every interval seconds (with ±40% jitter), up to
+       count orders.
+      With --kitchen , it also logs in as staff and moves each order to PREPARING after 5-15
+      seconds, to READY after another 10-20 seconds, and to COLLECTED 20 seconds later.
+      Logs each action and any 409 error, then continues. The script uses only the public
+      HTTP API, never the database directly.
+
+ 10. Build plan
+
+  Build in these eight milestones, in order. A milestone is done only when its "Done when"
+  check passes along with npm run typecheck , npm run lint and npm test .
+
+   1. M1: Scaffold and live socket. Create the Next.js app (TypeScript, Tailwind, App Router,
+      src/ directory), add shadcn/ui, set up the Prisma schema, migration and seed, create
+      server.ts with Socket.IO, and add the header connection badge.
+          Done when: npm run setup && npm run dev works on a fresh clone, and the
+          badge turns green on page load, amber when the server stops, and green again after
+          a restart.
+
+   2. M2: Auth and roles. Build register, login, logout and me; the JWT cookie; requireUser
+      and requireRole; the role layouts; the socket auth middleware; automatic room joins;
+      and role-based redirects.
+          Done when: each seeded account lands on its home route, a student gets
+          redirected away from /kitchen, and the API returns 403 for the wrong role.
+
+   3. M3: Menu, cart and menu admin. Build GET /api/menu, the /menu page, the persisted
+      cart, the admin menu CRUD and /kitchen/stock.
+          Done when: a student can build a cart, and admin edits appear after a refresh (live
+          updates come in M6).
+
+   4. M4: Ordering. Build placeOrder with the transaction, tokens, stock and idempotency;
+      the order tracker and My orders pages; and cancel.
+          Done when: an order gets token 101, stock drops, a double submit creates only one
+          order, and cancel restores stock.
+
+                                                                                                                                                                                                                                                  Page 28 of 33
+Campus Canteen Live -- PRD
+
+   5. M5: Real-time core. Build the emitters, the kitchen board with transitions and version
+      checks, the Collect box, live order tracking and the counter display.
+          Done when: with a student phone, the kitchen and the display open side by side,
+          every status change shows on all three within 1 second, with no refresh.
+
+   6. M6: Live extras. Add live menu updates (stock, availability, price, menu:changed), the
+      canteen open/closed switch, queue position and wait estimate, sounds and vibration,
+      browser notifications, the admin dashboard with throttled stats and presence, and the
+      display QR code.
+          Done when: every item marked Live in section 4 works in two browsers side by side.
+
+   7. M7: Resilience and hardening. Add refetch on reconnect, out-of-order protection,
+      optimistic kitchen actions with rollback, rate limits, the error shape everywhere,
+      graceful shutdown and the SQLite PRAGMAs.
+          Done when: stopping the server for 10 seconds while staff change orders in another
+          tab ends with every client correct after the restart.
+
+   8. M8: Tests, simulator and docs. Write the tests in section 11, the simulate script, the
+      README and DECISIONS.md.
+          Done when: every checkbox in section 11 passes, and npm run simulate -- --
+          kitchen runs a live demo end to end.
+
+ 11. Acceptance criteria and tests
+
+  The project is complete when every box below is checked. Automated tests cover the
+  rules that are hardest to see by hand.
+
+ 11.1 Real-time behaviour
+
+      A placed order appears on every open kitchen board within 1 second, with a flash and a
+      tone, and no refresh.
+      Start, Ready and Collected update the student's tracker and the counter display within
+      1 second.
+      A token that becomes ready pulses and chimes on the display, and it disappears when
+      collected.
+      Switching an item off, or its stock reaching 0, greys it out on every open menu within 1
+      second. Carts containing it show a warning.
+      Price and name edits appear live on open menus and in cart totals.
+
+                                                                                                                                                                                                                                                  Page 29 of 33
+Campus Canteen Live -- PRD
+
+      Closing the canteen shows the banner, disables ordering on every menu and shows the
+      closed state on the display. Reopening reverses all of it live.
+      Queue position and wait estimate update live as orders ahead of yours move forward.
+      The admin dashboard stats, chart and presence counts update live, no more than once
+      per second.
+      A student with two tabs open sees updates in both tabs.
+
+ 11.2 Concurrency and correctness
+
+      Two students ordering the last Samosa at the same moment: exactly one succeeds, the
+      other gets OUT_OF_STOCK, and stock never goes below 0.
+      Two staff tapping Ready on the same order: one succeeds, and the other sees the
+      conflict toast and the correct state.
+      A double-tapped Place order creates exactly one order.
+      Tokens start at 101 each business date and are never duplicated within a date.
+      Totals are computed from database prices, even if the client sends other prices.
+      Cancelled and rejected orders return their limited stock.
+
+ 11.3 Resilience
+
+      Stopping the server shows Reconnecting on every client. After a restart, every client
+      resyncs without a refresh, including changes made while it was offline.
+      Refreshing any page shows the same state as before the refresh.
+      An old order:updated event (lower version) never overwrites newer state.
+
+ 11.4 Security and privacy
+
+      Students cannot open /kitchen or /admin. The matching APIs return 403, and a
+      student's socket never receives kitchen or admin events.
+      A student cannot view or cancel another student's order.
+      The display and its socket payloads contain no names or items.
+      Rate limits return RATE_LIMITED.
+
+ 11.5 Setup and quality
+
+       npm install , npm run setup and npm run dev work on a fresh clone on Windows,
+      macOS and Linux.
+
+                                                                                                                                                                                                                                                  Page 30 of 33
+Campus Canteen Live -- PRD
+
+       npm run typecheck , npm run lint , npm test and npm run test:e2e all pass.
+      Phones on the same Wi-Fi can order through the laptop's LAN address.
+
+ 11.6 Required automated tests
+
+      Unit (Vitest): the transition rules table (every allowed and disallowed pair, by role),
+      queue position and wait estimate, businessDate across midnight in Asia/Kolkata, paise
+      formatting, and the Zod validators.
+      Integration (Vitest, using a separate test SQLite file): fire 10 parallel placeOrder calls
+      for an item with stock 3 and expect exactly 3 successes; parallel transitions with the
+      same expectedVersion produce one success; the idempotency key returns the same
+      order; token numbers are sequential and unique under parallel orders.
+      Socket integration: start the real server on a random port, connect socket.io-client as
+      a student, as staff and as a display, then assert that each receives only its own room's
+      events and that the display payloads contain no names.
+      End-to-end (Playwright, multiple browser contexts): a student places an order, the
+      kitchen context sees it, marks it Preparing and then Ready, and the student and
+      display contexts show READY within 2 seconds, with no reloads.
+
+ 12. Out of scope and future ideas
+
+  The items below are deliberately excluded from this version. Claude Code must not build
+  them, but the design should not block them.
+  Out of scope
+
+      Online payments (UPI gateway, cards, wallets). Payment happens at the counter.
+      Push notifications when the browser is closed (Web Push and service workers).
+      Multiple canteens or outlets, and ingredient-level inventory.
+      Running several server instances (would need the Socket.IO Redis adapter).
+      Email verification and password reset.
+      Native mobile apps.
+  Future ideas
+      A PWA with Web Push, so "Order ready" arrives even when the app is closed.
+      Scheduled pre-orders ("ready at 12:45 for lunch break").
+      Online payment through a UPI gateway, with a Paid status before preparation starts.
+
+                                                                                                                                                                                                                                                  Page 31 of 33
+Campus Canteen Live -- PRD
+
+      Ratings and feedback after collection.
+      Horizontal scaling with the Redis adapter and PostgreSQL.
+      Daily reports exported as CSV from the admin dashboard.
+
+ 13. Instructions for Claude Code
+
+  Build the complete application described in this document without stopping for questions
+  that the document already answers.
+   1. Work through the milestones in section 10 in order. After each one, run typecheck, lint
+
+      and tests, fix every failure, then commit with a message like M3: menu, cart and
+      menu admin .
+   2. Treat sections 3, 5 and 6 as the contract. Keep the status names, event names, payload
+      types, error codes and route paths exactly as written.
+   3. Never replace socket events with polling or a timed refresh. The only refetches allowed
+      are the initial load, refetch on reconnect, and menu:changed.
+   4. Keep writes on HTTP and events on Socket.IO. Emit only after commit, and only
+      through src/lib/realtime/emitters.ts.
+   5. Never trust the client for prices, roles, stock or status. The server checks everything
+      again.
+   6. If a library's current API differs from a snippet in this document, follow the library's
+      current documentation and keep the behaviour described here.
+   7. For any detail this document leaves open, make a sensible choice and record it in
+      DECISIONS.md with one line of reasoning.
+   8. Do not add features from section 12.
+   9. Finish with a README covering setup, the seed accounts, the LAN demo steps (laptop
+      IP, QR code, three screens), the simulator, how to run the tests, and a short "How the
+      real-time works" section with the architecture diagram.
+
+ Kick-off prompt
+
+  Save this document as PRD.md in an empty folder, open Claude Code there and paste:
+
+                                                                                                                                                                                                                                                  Page 32 of 33
+Campus Canteen Live -- PRD
+
+Read PRD.md fully. Build Campus Canteen Live exactly as  specified, milestone
+by milestone (M1-M8).                                    all failures, and
+After each milestone run typecheck, lint and tests, fix  use polling.
+commit.
+Do not skip any real-time (Live) requirement and do not
+When finished, walk me through the README demo steps.
+
+                                                         Page 33 of 33
+

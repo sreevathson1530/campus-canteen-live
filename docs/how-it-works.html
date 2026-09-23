@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Campus Canteen Live — How It Works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF6EE; --paper-2:#F2EBDD; --ink:#1B1A17; --ink-2:#4A463E; --ink-3:#7A7466;
+    --leaf:#1F5E3B; --leaf-2:#2F7A4F; --leaf-soft:#DCEBDF;
+    --turmeric:#E3A21A; --turmeric-soft:#FBEBC6;
+    --chili:#C23B22; --chili-soft:#F6DCD5;
+    --steel:#B9BCC0; --steel-2:#8E9296; --line:#E1D8C6;
+    --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body:"Figtree", "Segoe UI", system-ui, sans-serif;
+    --mono:"JetBrains Mono", Consolas, monospace;
+  }
+  @page{ size:A4; margin:18mm 16mm 20mm 16mm;
+    @bottom-left{ content:"Campus Canteen Live — How it works"; font:500 8pt "Figtree", sans-serif; color:#7A7466; }
+    @bottom-right{ content:counter(page); font:600 8pt "Figtree", sans-serif; color:#7A7466; }
+  }
+  @page cover{ margin:0; @bottom-left{content:none} @bottom-right{content:none} }
+  *{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  html,body{ margin:0; background:#fff; color:var(--ink); font:9.8pt/1.5 var(--body); }
+  h1,h2,h3,h4{ font-family:var(--display); margin:0; letter-spacing:-.01em; }
+  h2{ font-size:22pt; line-height:1.1; font-weight:800; margin:0 0 4mm; }
+  h3{ font-size:12.5pt; font-weight:700; margin:6mm 0 2mm; }
+  h4{ font-size:10.5pt; font-weight:700; margin:0 0 1.5mm; }
+  p{ margin:0 0 3mm; }
+  ul,ol{ margin:0 0 3mm; padding-left:5mm; }
+  li{ margin:0 0 1.2mm; }
+  code{ font:500 8.8pt var(--mono); background:var(--paper-2); padding:.3mm 1.2mm; border-radius:1mm; }
+  .section{ break-before:page; }
+  .kicker{ font:700 8pt var(--body); letter-spacing:.14em; text-transform:uppercase; color:var(--leaf); margin-bottom:2mm; }
+  .lede{ font-size:11pt; color:var(--ink-2); max-width:150mm; margin-bottom:5mm; }
+  .muted{ color:var(--ink-3); }
+  .avoid{ break-inside:avoid; }
+
+  /* cover */
+  .cover{ page:cover; height:297mm; width:210mm; position:relative; overflow:hidden; background:var(--leaf); color:var(--paper); padding:24mm 20mm; }
+  .cover .leafvein{ position:absolute; inset:0; }
+  .cover .brand{ font:700 9pt var(--body); letter-spacing:.2em; text-transform:uppercase; color:var(--turmeric); position:relative; }
+  .cover h1{ position:relative; font-size:54pt; line-height:.95; font-weight:800; margin-top:52mm; max-width:160mm; }
+  .cover h1 span{ color:var(--turmeric); }
+  .cover .sub{ position:relative; font-size:14pt; max-width:130mm; margin-top:8mm; color:#E8EFE9; }
+  .cover .token{ position:absolute; right:20mm; bottom:34mm; width:62mm; height:62mm; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #F6D98A 0%, #E3A21A 45%, #A8740C 100%);
+    box-shadow: inset 0 0 0 3mm rgba(255,255,255,.18), inset 0 -4mm 8mm rgba(0,0,0,.25), 0 10mm 20mm rgba(0,0,0,.3);
+    display:flex; align-items:center; justify-content:center; flex-direction:column; color:#3A2A05; }
+  .cover .token b{ font:800 34pt var(--display); line-height:1; }
+  .cover .token small{ font:700 7.5pt var(--body); letter-spacing:.2em; text-transform:uppercase; }
+  .cover .meta{ position:absolute; left:20mm; bottom:24mm; font-size:9pt; color:#CFE0D4; line-height:1.7; }
+  .cover .meta b{ color:var(--paper); }
+  .pill{ display:inline-block; font:700 7.5pt var(--body); letter-spacing:.08em; text-transform:uppercase; padding:1mm 2.6mm; border-radius:10mm; }
+  .pill.draft{ background:var(--turmeric); color:#3A2A05; }
+
+  /* cards & grids */
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+  .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:4mm; }
+  .card{ background:var(--paper); border:.3mm solid var(--line); border-radius:3mm; padding:4.5mm 5mm; break-inside:avoid; }
+  .card.leaf{ background:var(--leaf-soft); border-color:#BFD8C5; }
+  .card.turmeric{ background:var(--turmeric-soft); border-color:#EED79A; }
+  .card.chili{ background:var(--chili-soft); border-color:#EABDB1; }
+  .card p:last-child,.card ul:last-child{ margin-bottom:0; }
+  .role-ic{ width:9mm; height:9mm; border-radius:2.5mm; display:flex; align-items:center; justify-content:center; margin-bottom:2.5mm; }
+
+  table{ width:100%; border-collapse:collapse; margin:2mm 0 5mm; font-size:9.2pt; break-inside:auto; }
+  th{ text-align:left; font:700 8pt var(--body); letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); border-bottom:.5mm solid var(--ink); padding:1.5mm 2.5mm; }
+  td{ border-bottom:.3mm solid var(--line); padding:1.5mm 2.5mm; vertical-align:top; }
+  tr{ break-inside:avoid; }
+  td code{ font-size:8.2pt; }
+
+  .changed{ display:grid; grid-template-columns:30mm 1fr 1fr; gap:0; border:.3mm solid var(--line); border-radius:3mm; overflow:hidden; margin:3mm 0 6mm; }
+  .changed div{ padding:3mm 4mm; border-bottom:.3mm solid var(--line); font-size:9.3pt; }
+  .changed .h{ font:700 7.8pt var(--body); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); background:var(--paper-2); }
+  .changed .k{ font-weight:700; background:var(--paper); }
+  .changed .was{ color:var(--ink-3); text-decoration:line-through; text-decoration-color:rgba(194,59,34,.5); }
+  .changed .now{ color:var(--ink); }
+
+  /* journey */
+  .journey{ counter-reset:step; list-style:none; padding:0; margin:3mm 0; }
+  .journey li{ counter-increment:step; position:relative; padding:0 0 4mm 14mm; margin:0; break-inside:avoid; }
+  .journey li::before{ content:counter(step); position:absolute; left:0; top:-.5mm; width:9mm; height:9mm; border-radius:50%;
+    background:var(--leaf); color:var(--paper); font:800 10pt var(--display); display:flex; align-items:center; justify-content:center; }
+  .journey li::after{ content:""; position:absolute; left:4.35mm; top:9.5mm; bottom:0; width:.4mm; background:var(--line); }
+  .journey li:last-child::after{ display:none; }
+  .journey b{ font-family:var(--display); font-size:10.8pt; }
+
+  /* phones */
+  .phones{ display:flex; gap:5mm; justify-content:space-between; margin:4mm 0 3mm; }
+  .phone{ width:56mm; height:112mm; border-radius:7mm; background:#141412; padding:1.8mm; box-shadow:0 3mm 8mm rgba(0,0,0,.18); flex:none; }
+  .scr{ width:100%; height:100%; border-radius:5.4mm; background:var(--paper); overflow:hidden; position:relative; font-size:6.4pt; line-height:1.35; }
+  .scr .bar{ height:5mm; display:flex; align-items:center; justify-content:space-between; padding:0 3.5mm; font:700 5.5pt var(--body); color:var(--ink-2); }
+  .scr .hdr{ padding:1.5mm 3mm 2mm; display:flex; align-items:center; justify-content:space-between; }
+  .scr .hdr b{ font:800 9pt var(--display); }
+  .live{ display:inline-flex; align-items:center; gap:1mm; font:700 5.2pt var(--body); color:var(--leaf); background:var(--leaf-soft); border-radius:3mm; padding:.6mm 1.6mm; }
+  .live::before{ content:""; width:1.4mm; height:1.4mm; border-radius:50%; background:#2FA25A; }
+  .tabs{ display:flex; gap:1.2mm; padding:0 3mm 2mm; }
+  .tabs span{ font:700 5.6pt var(--body); padding:.9mm 2mm; border-radius:3mm; background:var(--paper-2); color:var(--ink-2); }
+  .tabs span.on{ background:var(--ink); color:var(--paper); }
+  .items{ display:grid; grid-template-columns:1fr 1fr; gap:1.8mm; padding:0 3mm; }
+  .it{ background:#fff; border:.25mm solid var(--line); border-radius:2mm; padding:1.2mm; position:relative; }
+  .it .ph{ height:15mm; border-radius:1.5mm; background:radial-gradient(circle at 50% 45%, #fff 0%, #F1EADB 70%); display:flex; align-items:center; justify-content:center; }
+  .it .nm{ font:700 6pt var(--body); margin-top:1mm; display:flex; align-items:center; gap:.8mm; }
+  .it .pr{ display:flex; justify-content:space-between; align-items:center; margin-top:.6mm; font-weight:700; }
+  .it .add{ width:4.2mm; height:4.2mm; border-radius:1.2mm; background:var(--leaf); color:#fff; font:800 7pt var(--body); display:flex; align-items:center; justify-content:center; }
+  .it.sold{ opacity:.45; }
+  .badge{ position:absolute; top:1.8mm; left:1.8mm; font:700 4.8pt var(--body); padding:.4mm 1.2mm; border-radius:1mm; }
+  .badge.low{ background:var(--turmeric); color:#3A2A05; }
+  .badge.out{ background:var(--ink); color:#fff; }
+  .veg{ width:2.2mm; height:2.2mm; border:.3mm solid #2F7A4F; display:inline-flex; align-items:center; justify-content:center; flex:none; }
+  .veg::after{ content:""; width:1mm; height:1mm; border-radius:50%; background:#2F7A4F; }
+  .nveg{ width:2.2mm; height:2.2mm; border:.3mm solid var(--chili); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+  .nveg::after{ content:""; width:0; height:0; border-left:.6mm solid transparent; border-right:.6mm solid transparent; border-bottom:1mm solid var(--chili); }
+  .cartbar{ position:absolute; left:2.5mm; right:2.5mm; bottom:3mm; background:var(--leaf); color:#fff; border-radius:2.5mm; padding:2mm 3mm; display:flex; justify-content:space-between; font:700 6.4pt var(--body); }
+  .sheet{ position:absolute; left:0; right:0; bottom:0; background:#fff; border-radius:4mm 4mm 0 0; box-shadow:0 -2mm 6mm rgba(0,0,0,.15); padding:2.5mm 3.5mm 4mm; }
+  .grab{ width:9mm; height:.9mm; border-radius:1mm; background:var(--steel); margin:0 auto 2.5mm; }
+  .dim{ position:absolute; inset:0; background:rgba(20,20,18,.35); }
+  .otp{ display:flex; gap:1.8mm; justify-content:center; margin:3mm 0 2.5mm; }
+  .otp span{ width:8mm; height:10mm; border-radius:1.8mm; border:.35mm solid var(--line); display:flex; align-items:center; justify-content:center; font:800 11pt var(--display); background:var(--paper); }
+  .otp span.f{ border-color:var(--leaf); }
+  .btn{ background:var(--leaf); color:#fff; font:700 6.6pt var(--body); text-align:center; padding:2mm; border-radius:2mm; }
+  .btn.ghost{ background:transparent; color:var(--leaf); padding:1mm; }
+  .bigtoken{ text-align:center; padding:3mm 0 1mm; }
+  .bigtoken small{ font:700 5.4pt var(--body); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); }
+  .bigtoken b{ display:block; font:800 30pt var(--display); line-height:1; }
+  .stepper{ display:flex; justify-content:space-between; padding:2mm 4mm; position:relative; }
+  .stepper::before{ content:""; position:absolute; left:6mm; right:6mm; top:3.7mm; height:.5mm; background:var(--line); }
+  .stepper div{ position:relative; text-align:center; width:10mm; font:600 4.8pt var(--body); color:var(--ink-3); }
+  .stepper i{ display:block; width:3.6mm; height:3.6mm; border-radius:50%; background:var(--line); margin:0 auto 1mm; border:.5mm solid var(--paper); }
+  .stepper .d i{ background:var(--leaf); } .stepper .c i{ background:var(--turmeric); box-shadow:0 0 0 .8mm var(--turmeric-soft); }
+  .stepper .d, .stepper .c{ color:var(--ink); }
+  .qcard{ margin:2mm 3mm; background:var(--turmeric-soft); border-radius:2mm; padding:2mm 2.5mm; font-weight:600; }
+  .qcard b{ font:800 9pt var(--display); }
+  .ready{ position:absolute; inset:0; background:var(--leaf); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:4mm; }
+  .ready .ring{ width:30mm; height:30mm; border-radius:50%; border:.8mm solid rgba(255,255,255,.35); display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 3mm rgba(255,255,255,.08), 0 0 0 6mm rgba(255,255,255,.05); }
+  .ready .ring b{ font:800 26pt var(--display); }
+  .kcols{ display:flex; gap:1mm; padding:0 3mm 2mm; }
+  .kcols span{ flex:1; text-align:center; font:700 5.6pt var(--body); padding:1.2mm 0; border-radius:1.5mm; background:var(--paper-2); }
+  .kcols span.on{ background:var(--ink); color:#fff; }
+  .kcard{ margin:0 3mm 1.8mm; background:#fff; border:.25mm solid var(--line); border-radius:2mm; padding:2mm; }
+  .kcard.new{ border-color:var(--turmeric); box-shadow:0 0 0 .6mm var(--turmeric-soft); }
+  .kcard .top{ display:flex; justify-content:space-between; align-items:baseline; }
+  .kcard .top b{ font:800 11pt var(--display); }
+  .timer{ font:700 5.4pt var(--mono); padding:.4mm 1.2mm; border-radius:1mm; background:var(--paper-2); }
+  .timer.amber{ background:var(--turmeric-soft); color:#7A5306; }
+  .timer.red{ background:var(--chili-soft); color:var(--chili); }
+  .note{ background:var(--turmeric-soft); border-radius:1mm; padding:.6mm 1.2mm; margin:1mm 0; font-weight:600; }
+  .kact{ display:flex; gap:1.2mm; margin-top:1.4mm; }
+  .kact .btn{ flex:1; padding:1.4mm; }
+  .kact .more{ width:6mm; border:.25mm solid var(--line); border-radius:2mm; display:flex; align-items:center; justify-content:center; font-weight:800; }
+  .collect{ margin:0 3mm 2mm; display:flex; gap:1mm; }
+  .collect span{ flex:1; border:.3mm solid var(--line); border-radius:1.8mm; padding:1.4mm 2mm; color:var(--ink-3); background:#fff; }
+  .collect b{ background:var(--ink); color:#fff; border-radius:1.8mm; padding:1.4mm 2mm; font-size:6pt; }
+  .cap{ font:600 8pt var(--body); color:var(--ink-3); text-align:center; margin-top:2mm; width:56mm; }
+  .phonewrap{ display:flex; flex-direction:column; align-items:center; }
+  .viewer{ height:52mm; margin:0 3mm; border-radius:3mm; background:radial-gradient(circle at 50% 40%, #FFFFFF 0%, #EFE6D3 60%, #D9CDB4 100%); position:relative; display:flex; align-items:center; justify-content:center; }
+  .viewer .hint{ position:absolute; bottom:2mm; left:0; right:0; text-align:center; font:600 5.2pt var(--body); color:var(--ink-2); }
+  .viewer .orbit{ position:absolute; width:40mm; height:12mm; border:.35mm dashed rgba(27,26,23,.25); border-radius:50%; bottom:9mm; }
+
+  .figure{ border:.3mm solid var(--line); border-radius:3mm; padding:4mm; background:#fff; margin:3mm 0 5mm; break-inside:avoid; }
+  .figcap{ font:600 8pt var(--body); color:var(--ink-3); margin-top:2mm; }
+  svg text{ font-family:"Figtree","Segoe UI",sans-serif; }
+
+  .swatches{ display:flex; gap:3mm; margin:3mm 0 5mm; }
+  .sw{ flex:1; border-radius:2.5mm; overflow:hidden; border:.3mm solid var(--line); break-inside:avoid; }
+  .sw .c{ height:18mm; }
+  .sw .l{ padding:2mm 2.5mm; font-size:8pt; }
+  .sw .l b{ display:block; font:700 8.5pt var(--body); }
+  .sw .l code{ background:none; padding:0; font-size:7.5pt; color:var(--ink-3); }
+
+  .milestone{ display:grid; grid-template-columns:14mm 1fr; gap:3mm; padding:.9mm 0; font-size:8.7pt; line-height:1.38; border-bottom:.3mm solid var(--line); break-inside:avoid; }
+  .milestone .n{ font:800 16pt var(--display); color:var(--leaf); line-height:1; }
+  .milestone h4{ margin-bottom:1mm; }
+  .milestone .done{ font-size:8.8pt; color:var(--ink-2); margin-top:1mm; }
+  .milestone .done b{ color:var(--leaf); }
+  .new-tag{ font:700 6.5pt var(--body); letter-spacing:.06em; text-transform:uppercase; background:var(--turmeric); color:#3A2A05; padding:.4mm 1.6mm; border-radius:1mm; margin-left:1.5mm; vertical-align:middle; }
+
+  .callout{ border-left:1.2mm solid var(--turmeric); background:var(--turmeric-soft); padding:3.5mm 4.5mm; border-radius:0 2.5mm 2.5mm 0; margin:3mm 0 5mm; break-inside:avoid; }
+  .callout.leaf{ border-color:var(--leaf); background:var(--leaf-soft); }
+  .callout.chili{ border-color:var(--chili); background:var(--chili-soft); }
+  .callout p:last-child{ margin:0; }
+  .toc{ columns:2; column-gap:10mm; list-style:none; padding:0; margin:4mm 0 0; }
+  .toc li{ display:flex; gap:3mm; padding:2.2mm 0; border-bottom:.3mm solid var(--line); break-inside:avoid; font-weight:600; }
+  .toc li span{ font:800 9pt var(--display); color:var(--leaf); width:7mm; }
+  .st td{padding:1.1mm 2.2mm;font-size:8.8pt}
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <svg class="leafvein" viewBox="0 0 210 297" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M-10 250 C 60 200, 140 160, 230 40" stroke="rgba(255,255,255,.10)" stroke-width="1.2" fill="none"/>
+    <g stroke="rgba(255,255,255,.06)" stroke-width=".7" fill="none">
+      <path d="M20 232 C 30 250, 40 270, 44 300"/><path d="M50 213 C 62 236, 76 262, 84 300"/>
+      <path d="M82 192 C 98 218, 116 250, 128 300"/><path d="M114 168 C 134 196, 156 232, 172 300"/>
+      <path d="M146 140 C 168 170, 192 210, 212 260"/><path d="M178 104 C 196 128, 210 150, 220 170"/>
+      <path d="M20 232 C 10 210, 4 190, -6 170"/><path d="M50 213 C 36 186, 26 160, 20 130"/>
+      <path d="M82 192 C 70 160, 62 130, 60 90"/><path d="M114 168 C 106 132, 102 96, 104 50"/>
+      <path d="M146 140 C 142 104, 142 66, 150 20"/><path d="M178 104 C 178 76, 182 44, 192 10"/>
+    </g>
+  </svg>
+  <div class="brand">Campus Canteen Live</div>
+  <h1>How the app <span>works.</span></h1>
+  <p class="sub">Order ahead from your phone, verify with a one-time code, and watch your food go from kitchen to counter live, with the menu shown in 3D.</p>
+  <div class="token"><small>Token</small><b>107</b><small>Ready</small></div>
+  <div class="meta">
+    <span class="pill draft">Design draft · awaiting approval</span><br><br>
+    <b>Version</b> 1.0 · 23 September 2026<br>
+    <b>Based on</b> Campus Canteen Live PRD + design decisions agreed in chat<br>
+    <b>Platform</b> Mobile web app (student, kitchen and admin)
+  </div>
+</section>
+
+<!-- ============ AT A GLANCE ============ -->
+<section class="section">
+  <div class="kicker">At a glance</div>
+  <h2>One canteen, one live source of truth.</h2>
+  <p class="lede">Students order from their phones and get a daily token number. The kitchen sees the order the moment it's placed and moves it along with one tap. Every change reaches every phone within a second, with no refresh.</p>
+
+  <div class="grid3">
+    <div class="card leaf"><h4>Order ahead</h4><p>Browse a 3D menu, build a cart and confirm with a 4-digit code sent to your phone. You get a token like <b>107</b>.</p></div>
+    <div class="card turmeric"><h4>Watch it live</h4><p>Your tracker shows your place in the queue, an estimated wait, and each step: Placed → Preparing → Ready.</p></div>
+    <div class="card"><h4>Pick up</h4><p>When it's ready your phone chimes and vibrates. Show the token, pay by cash or UPI at the counter, and you're done.</p></div>
+  </div>
+
+  <h3>What changed from the original PRD</h3>
+  <p>The PRD is still the base contract. These decisions change or add to it:</p>
+  <div class="changed">
+    <div class="h">Area</div><div class="h">PRD said</div><div class="h">This design does</div>
+    <div class="k">Counter TV</div><div class="was">A public <code>/display</code> screen on a TV with a token board and QR code</div><div class="now"><b>Removed.</b> The canteen has no TV. The "Ready" alert on the student's own phone is the pickup signal.</div>
+    <div class="k">Devices</div><div class="was">Kitchen on tablets, admin on laptops</div><div class="now"><b>Mobile-first everywhere.</b> Student, kitchen, stock and admin screens are all designed for a phone first.</div>
+    <div class="k">Anti-prank</div><div class="was">Nothing beyond a login</div><div class="now"><b>New: a 4-digit SMS code before every order.</b> Each phone number can belong to one account only.</div>
+    <div class="k">SMS sending</div><div class="was">—</div><div class="now"><b>Your own Android phone as a free SMS gateway</b> (textbee / SMS Gateway for Android). Codes print in the terminal during development.</div>
+    <div class="k">Food visuals</div><div class="was">A photo or a coloured tile with the item's initial</div><div class="now"><b>3D food (hybrid).</b> Still renders on the menu grid; tap a dish to open a live Three.js model you can spin.</div>
+  </div>
+
+</section>
+<section class="section">
+  <div class="kicker">Contents</div>
+  <h2>What's inside.</h2>
+  <p class="lede">Start with sections 02–04 for the student experience, 06–07 for the kitchen, 08–09 for the engineering, and 11 and 15 for the design decisions still waiting on you.</p>
+  <ul class="toc" style="columns:1">
+    <li><span>01</span>Who uses it</li>
+    <li><span>02</span>A student's order, start to finish</li>
+    <li><span>03</span>The screens (wireframes)</li>
+    <li><span>04</span>Phone verification (OTP)</li>
+    <li><span>05</span>The order lifecycle and the bill</li>
+    <li><span>06</span>The kitchen, on a phone</li>
+    <li><span>07</span>Stock, open/closed and admin</li>
+    <li><span>08</span>How "live" works</li>
+    <li><span>09</span>Staying correct under pressure</li>
+    <li><span>10</span>Security and privacy</li>
+    <li><span>11</span>Design direction and 3D food</li>
+    <li><span>12</span>Data, API and where orders are stored</li>
+    <li><span>13</span>Tech stack</li>
+    <li><span>14</span>Build plan</li>
+    <li><span>15</span>Decisions and open questions</li>
+  </ul>
+</section>
+
+<!-- ============ 01 ROLES ============ -->
+<section class="section">
+  <div class="kicker">01 · Who uses it</div>
+  <h2>Three roles. The server decides who's who.</h2>
+  <p class="lede">Registering always creates a Student. Staff and admins are seeded or created by an admin. Every page and every API checks the role on the server; hiding a button is never the only protection.</p>
+
+  <div class="grid3">
+    <div class="card">
+      <div class="role-ic" style="background:var(--leaf-soft)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F5E3B" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></div>
+      <h4>Student</h4>
+      <p class="muted" style="font-size:8.8pt">Anyone who registers · phone</p>
+      <ul><li>Browse the 3D menu</li><li>Verify with an OTP and place orders</li><li>Track orders live, cancel while still Placed</li><li>Up to 3 active orders at once</li></ul>
+      <p><code>/menu</code></p>
+    </div>
+    <div class="card">
+      <div class="role-ic" style="background:var(--turmeric-soft)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7A5306" stroke-width="2"><path d="M4 11h16M6 11V8a6 6 0 0 1 12 0v3M5 11l1 9h12l1-9"/></svg></div>
+      <h4>Staff</h4>
+      <p class="muted" style="font-size:8.8pt">Kitchen and counter · phone</p>
+      <ul><li>Run the live kitchen board</li><li>Start, Ready, Collected, Reject</li><li>Mark pickups by token number</li><li>Change stock, availability, open/closed</li></ul>
+      <p><code>/kitchen</code></p>
+    </div>
+    <div class="card">
+      <div class="role-ic" style="background:var(--chili-soft)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C23B22" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+      <h4>Admin</h4>
+      <p class="muted" style="font-size:8.8pt">Canteen manager · phone or laptop</p>
+      <ul><li>Everything staff can do</li><li>Live dashboard: orders, revenue, prep time</li><li>Menu, users, settings and all bills</li><li>Can't remove their own admin role</li></ul>
+      <p><code>/admin</code></p>
+    </div>
+  </div>
+
+  <h3>Who sees what</h3>
+  <table>
+    <tr><th>Information</th><th>Student</th><th>Staff</th><th>Admin</th></tr>
+    <tr><td>Their own orders</td><td>Yes</td><td>—</td><td>—</td></tr>
+    <tr><td>Everyone's orders today</td><td>No</td><td>Yes, first name only</td><td>Yes</td></tr>
+    <tr><td>Email, roll number, phone of others</td><td>No</td><td>No</td><td>Yes</td></tr>
+    <tr><td>Live stats and who's online</td><td>No</td><td>Presence only</td><td>Yes</td></tr>
+  </table>
+</section>
+
+<!-- ============ 02 JOURNEY ============ -->
+<section class="section">
+  <div class="kicker">02 · The student journey</div>
+  <h2>A student's order, start to finish.</h2>
+  <p class="lede">Here's what happens between opening the app and walking away with food. Each step shows what the student sees and what the system does.</p>
+
+  <ol class="journey">
+    <li><b>Register once.</b> Name, email, password, optional roll number and a <b>10-digit mobile number (+91)</b>. Each number can belong to one account only, which stops people making several accounts to send fake orders.</li>
+    <li><b>Open the menu.</b> Dishes are grouped under sticky category tabs (Breakfast, Meals, Snacks, Beverages). Each card shows a 3D-rendered still of the dish, its price in ₹, a veg/non-veg marker, and "Only N left" or "Sold out" when relevant. All of it updates live.</li>
+    <li><b>Look closer (optional).</b> Tap a dish and a sheet slides up with a live 3D model: drag to spin, pinch to zoom, with steam rising from hot items.</li>
+    <li><b>Build the cart.</b> Up to 10 of any one item and 10 different items. The cart is saved on the phone, so it survives a refresh. Add a note like "less spicy".</li>
+    <li><b>Place order → verify.</b> A 4-digit code is sent by SMS to the student's registered number. They type it in (or the phone fills it in automatically). No correct code, no order.</li>
+    <li><b>Get a token.</b> The order is placed in a single database transaction. The student gets <b>token 107</b> and lands on the live tracker. At the same moment the order appears on every kitchen phone with a tone.</li>
+    <li><b>Wait, informed.</b> "You are #3 in the queue · about 9 min" updates live as orders ahead move. The stepper goes Placed → Preparing.</li>
+    <li><b>Ready.</b> The screen turns green: "Ready, show token 107 at the counter", with a chime, a vibration, and a browser notification if the tab is in the background.</li>
+    <li><b>Collect and pay.</b> Staff type 107 into the Collect box. The student pays by cash or UPI at the counter, and the order becomes Collected. <b>The bill is created at that moment</b> and appears on the student's phone.</li>
+  </ol>
+
+  <div class="callout leaf"><p><b>If something goes wrong:</b> if the kitchen rejects an order, the student sees the reason ("Item ran out") and "You have not been charged", and any limited stock goes back on sale. If the canteen closes, every menu shows a banner and ordering is disabled, while orders already in progress carry on.</p></div>
+</section>
+
+<!-- ============ 03 SCREENS ============ -->
+<section class="section">
+  <div class="kicker">03 · The screens</div>
+  <h2>Wireframes of the student flow.</h2>
+  <p class="lede">These show structure and behaviour, not final visuals. Final colours, 3D renders and motion follow once the 3D style is chosen (section 15).</p>
+
+  <div class="phones">
+    <!-- Menu -->
+    <div class="phonewrap"><div class="phone"><div class="scr">
+      <div class="bar"><span>12:41</span><span>●●● 4G</span></div>
+      <div class="hdr"><b>Menu</b><span class="live">Live</span></div>
+      <div class="tabs"><span class="on">Breakfast</span><span>Meals</span><span>Snacks</span><span>Drinks</span></div>
+      <div class="items">
+        <div class="it"><div class="ph"><svg width="44" height="30" viewBox="0 0 44 30"><ellipse cx="22" cy="25" rx="14" ry="2.2" fill="rgba(27,26,23,.12)"/><ellipse cx="16" cy="15" rx="7" ry="4" fill="#FFFDF6" stroke="#E9DFC8"/><ellipse cx="28" cy="15" rx="7" ry="4" fill="#FFFDF6" stroke="#E9DFC8"/></svg></div><div class="nm"><i class="veg"></i>Idli (2 pcs)</div><div class="pr">₹30<span class="add">+</span></div></div>
+        <div class="it"><span class="badge low">Only 3 left</span><div class="ph"><svg width="44" height="30" viewBox="0 0 44 30"><ellipse cx="22" cy="25" rx="14" ry="2.2" fill="rgba(27,26,23,.12)"/><path d="M4 18 Q22 6 40 18 Q22 22 4 18Z" fill="#D9A441"/><path d="M8 17 Q22 9 36 17" stroke="#B9822A" fill="none"/></svg></div><div class="nm"><i class="veg"></i>Masala Dosa</div><div class="pr">₹50<span class="add">+</span></div></div>
+        <div class="it"><div class="ph"><svg width="44" height="30" viewBox="0 0 44 30"><ellipse cx="22" cy="25" rx="14" ry="2.2" fill="rgba(27,26,23,.12)"/><ellipse cx="22" cy="17" rx="12" ry="6" fill="#F3E3B0"/><circle cx="18" cy="15" r="1" fill="#2B2B2B"/><circle cx="25" cy="16" r="1" fill="#2B2B2B"/></svg></div><div class="nm"><i class="veg"></i>Pongal</div><div class="pr">₹40<span class="add">+</span></div></div>
+        <div class="it sold"><span class="badge out">Sold out</span><div class="ph"><svg width="44" height="30" viewBox="0 0 44 30"><ellipse cx="22" cy="25" rx="14" ry="2.2" fill="rgba(27,26,23,.12)"/><circle cx="16" cy="15" r="6" fill="#E0A650"/><circle cx="28" cy="15" r="6" fill="#DB9B40"/></svg></div><div class="nm"><i class="veg"></i>Poori Masala</div><div class="pr">₹45<span class="add" style="background:#aaa">+</span></div></div>
+        <div class="it"><div class="ph"><svg width="44" height="30" viewBox="0 0 44 30"><rect x="16" y="6" width="12" height="20" rx="2" fill="#C9CDD1"/><ellipse cx="22" cy="6" rx="6" ry="1.6" fill="#8A5A2B"/><path d="M19 3 q1 -2 0 -3 M24 3 q1 -2 0 -3" stroke="#bbb" fill="none"/></svg></div><div class="nm"><i class="veg"></i>Filter Coffee</div><div class="pr">₹15<span class="add">+</span></div></div>
+        <div class="it"><div class="ph"><svg width="44" height="30" viewBox="0 0 44 30"><ellipse cx="22" cy="25" rx="14" ry="2.2" fill="rgba(27,26,23,.12)"/><ellipse cx="22" cy="17" rx="15" ry="6" fill="#C8792F"/><circle cx="17" cy="15" r="2" fill="#F2D08A"/><circle cx="26" cy="16" r="2.4" fill="#9B4A1E"/></svg></div><div class="nm"><i class="nveg"></i>Chicken Biryani</div><div class="pr">₹110<span class="add">+</span></div></div>
+      </div>
+      <div class="cartbar"><span>3 items</span><span>₹100 · View cart →</span></div>
+    </div></div><div class="cap">Menu with 3D stills</div></div>
+
+    <!-- 3D viewer -->
+    <div class="phonewrap"><div class="phone"><div class="scr">
+      <div class="bar"><span>12:41</span><span>●●● 4G</span></div>
+      <div class="dim"></div>
+      <div class="sheet" style="top:14mm">
+        <div class="grab"></div>
+        <div class="viewer">
+          <svg width="120" height="80" viewBox="0 0 120 80"><defs><radialGradient id="pl" cx="50%" cy="40%"><stop offset="0" stop-color="#F4F5F6"/><stop offset="1" stop-color="#A9AEB3"/></radialGradient><linearGradient id="ds" x1="0" x2="1"><stop offset="0" stop-color="#E7B45A"/><stop offset=".5" stop-color="#C98B32"/><stop offset="1" stop-color="#E2AA4E"/></linearGradient></defs>
+            <ellipse cx="60" cy="62" rx="42" ry="6" fill="rgba(27,26,23,.14)"/>
+            <path d="M12 48 Q60 14 108 48 Q60 58 12 48Z" fill="url(#ds)"/><path d="M20 46 Q60 22 100 46" stroke="#A56E21" stroke-width="1.2" fill="none"/>
+            <path d="M48 20 q4 -6 0 -12 M60 16 q4 -6 0 -12 M72 20 q4 -6 0 -12" stroke="rgba(120,120,120,.45)" stroke-width="1.4" fill="none"/></svg>
+          <div class="hint">⟲ Drag to spin · pinch to zoom</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2.5mm"><b style="font:800 9pt var(--display)">Masala Dosa</b><b>₹50</b></div>
+        <div style="display:flex;align-items:center;gap:1mm;margin:.8mm 0 1.5mm"><i class="veg"></i><span>Veg · ~6 min · Only 3 left</span></div>
+        <p style="color:var(--ink-2);margin:0 0 2.5mm">Crisp rice-lentil crepe with spiced potato, sambar and chutney.</p>
+        <div style="display:flex;gap:1.5mm;align-items:center"><span style="border:.3mm solid var(--line);border-radius:2mm;padding:1.4mm 2.4mm;font-weight:800">−  1  +</span><div class="btn" style="flex:1">Add · ₹50</div></div>
+      </div>
+    </div></div><div class="cap">Live Three.js dish viewer</div></div>
+
+    <!-- OTP -->
+    <div class="phonewrap"><div class="phone"><div class="scr">
+      <div class="bar"><span>12:42</span><span>●●● 4G</span></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <b style="font:800 10pt var(--display)">Confirm it's you</b>
+        <p style="color:var(--ink-2);margin:1mm 0 0">We sent a 4-digit code to <b>+91 ••••• •4821</b></p>
+        <div class="otp"><span class="f">4</span><span class="f">8</span><span class="f">1</span><span>_</span></div>
+        <p style="text-align:center;color:var(--ink-3);margin:0 0 2.5mm">Resend code in 0:24 · expires in 4:36</p>
+        <div class="btn">Verify &amp; place order · ₹100</div>
+        <div class="btn ghost" style="margin-top:1mm">Change cart</div>
+      </div>
+    </div></div><div class="cap">OTP before every order</div></div>
+  </div>
+
+</section>
+<section class="section">
+  <div class="kicker">03 · The screens (continued)</div>
+  <h2>Tracking the order to pickup.</h2>
+  <div class="phones" style="justify-content:flex-start;gap:9mm">
+    <!-- Tracker -->
+    <div class="phonewrap"><div class="phone"><div class="scr">
+      <div class="bar"><span>12:43</span><span>●●● 4G</span></div>
+      <div class="hdr"><b>Your order</b><span class="live">Live</span></div>
+      <div class="bigtoken"><small>Token</small><b>107</b></div>
+      <div class="stepper"><div class="d"><i></i>Placed<br>12:42</div><div class="c"><i></i>Preparing<br>12:44</div><div><i></i>Ready</div><div><i></i>Collected</div></div>
+      <div class="qcard">You are <b>#3</b> in the queue · about <b>9 min</b></div>
+      <div style="padding:1.5mm 3mm">
+        <div style="display:flex;justify-content:space-between;padding:1mm 0;border-bottom:.25mm solid var(--line)"><span>1 × Masala Dosa</span><b>₹50</b></div>
+        <div style="display:flex;justify-content:space-between;padding:1mm 0;border-bottom:.25mm solid var(--line)"><span>2 × Filter Coffee</span><b>₹30</b></div>
+        <div style="display:flex;justify-content:space-between;padding:1mm 0;border-bottom:.25mm solid var(--line)"><span>1 × Veg Puff</span><b>₹20</b></div>
+        <div class="note" style="margin-top:1.5mm">Note: less spicy</div>
+        <div style="display:flex;justify-content:space-between;padding:1mm 0;font-weight:800"><span>Total · pay at counter</span><span>₹100</span></div>
+      </div>
+      <div style="position:absolute;left:3mm;right:3mm;bottom:3mm" class="btn ghost">Cancel order</div>
+    </div></div><div class="cap">Live tracker</div></div>
+
+    <!-- Ready -->
+    <div class="phonewrap"><div class="phone"><div class="scr">
+      <div class="ready">
+        <div style="font:700 6pt var(--body);letter-spacing:.16em;text-transform:uppercase;opacity:.85;margin-bottom:4mm">Ready for pickup</div>
+        <div class="ring"><b>107</b></div>
+        <div style="font:800 11pt var(--display);margin-top:5mm;line-height:1.15">Show token 107<br>at the counter</div>
+        <div style="margin-top:3mm;opacity:.85">Chime · vibration · notification</div>
+        <div style="position:absolute;bottom:4mm;font-size:5.4pt;opacity:.8">Pay ₹100 by cash or UPI when you collect</div>
+      </div>
+    </div></div><div class="cap">Ready state</div></div>
+
+    <div style="flex:1;padding-top:6mm">
+      <h4>What each screen is built for</h4>
+      <ul style="font-size:9.2pt">
+        <li><b>Menu:</b> built to load fast. The 3D stills are small images, so the grid is usable within 2 s on 4G.</li>
+        <li><b>Dish viewer:</b> 3D only loads when you ask for it. Without WebGL, or with reduced motion on, it shows the still instead.</li>
+        <li><b>OTP sheet:</b> one tap to request, the code fills in automatically on Android and iOS, and the resend timer is always visible.</li>
+        <li><b>Tracker:</b> a big token, a clear stepper with times, and the queue position. Every change is announced to screen readers.</li>
+        <li><b>Ready:</b> fills the whole screen so it can't be missed. Colour is never the only signal; there's always text too.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 OTP ============ -->
+<section class="section">
+  <div class="kicker">04 · Phone verification</div>
+  <h2>No code, no order.</h2>
+  <p class="lede">So that nobody can place orders for fun, every order needs a fresh 4-digit code sent to the student's registered mobile number. The server enforces this, not just the app.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 560 300" width="100%">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker>
+      <marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1F5E3B"/></marker></defs>
+      <g font-size="10" font-weight="700">
+        <rect x="10" y="8" width="100" height="26" rx="6" fill="#DCEBDF"/><text x="60" y="25" text-anchor="middle">Student phone</text>
+        <rect x="180" y="8" width="100" height="26" rx="6" fill="#F2EBDD"/><text x="230" y="25" text-anchor="middle">Server</text>
+        <rect x="330" y="8" width="100" height="26" rx="6" fill="#FBEBC6"/><text x="380" y="25" text-anchor="middle">Gateway phone</text>
+        <rect x="450" y="8" width="100" height="26" rx="6" fill="#F2EBDD"/><text x="500" y="25" text-anchor="middle">Database</text>
+      </g>
+      <g stroke="#CFC5B0" stroke-dasharray="3 3"><line x1="60" y1="34" x2="60" y2="295"/><line x1="230" y1="34" x2="230" y2="295"/><line x1="380" y1="34" x2="380" y2="295"/><line x1="500" y1="34" x2="500" y2="295"/></g>
+      <g font-size="9" fill="#1B1A17">
+        <line x1="60" y1="55" x2="228" y2="55" stroke="#1B1A17" marker-end="url(#ar)"/><text x="66" y="50">POST /api/otp/send</text>
+        <line x1="230" y1="78" x2="498" y2="78" stroke="#1B1A17" marker-end="url(#ar)"/><text x="300" y="73">store hash(code), expiry 5 min</text>
+        <line x1="230" y1="100" x2="378" y2="100" stroke="#1B1A17" marker-end="url(#ar)"/><text x="238" y="95">send SMS "4821 is your code"</text>
+        <line x1="380" y1="122" x2="62" y2="122" stroke="#C23B22" stroke-dasharray="4 3" marker-end="url(#ar)"/><text x="160" y="117" fill="#C23B22">SMS via the gateway's SIM</text>
+        <line x1="60" y1="150" x2="228" y2="150" stroke="#1B1A17" marker-end="url(#ar)"/><text x="66" y="145">POST /api/otp/verify { code }</text>
+        <line x1="230" y1="172" x2="498" y2="172" stroke="#1B1A17" marker-end="url(#ar)"/><text x="262" y="167">compare hash · count attempts</text>
+        <line x1="228" y1="194" x2="62" y2="194" stroke="#1F5E3B" marker-end="url(#arg)"/><text x="72" y="189" fill="#1F5E3B">otpToken (single use, 10 min)</text>
+        <line x1="60" y1="222" x2="228" y2="222" stroke="#1B1A17" marker-end="url(#ar)"/><text x="66" y="217">POST /api/orders + otpToken</text>
+        <line x1="230" y1="246" x2="498" y2="246" stroke="#1B1A17" marker-end="url(#ar)"/><text x="248" y="241">one transaction: use up token, stock, token no.</text>
+        <line x1="228" y1="272" x2="62" y2="272" stroke="#1F5E3B" marker-end="url(#arg)"/><text x="72" y="267" fill="#1F5E3B">201 · token 107</text>
+      </g>
+    </svg>
+    <div class="figcap">The code proves the student has the phone. The single-use token ties that proof to exactly one order.</div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h3 style="margin-top:0">The rules</h3>
+      <table>
+        <tr><th>Rule</th><th>Value</th></tr>
+        <tr><td>Code length</td><td>4 digits, random</td></tr>
+        <tr><td>Code lifetime</td><td>5 minutes</td></tr>
+        <tr><td>Wrong tries allowed</td><td>5, then the code is locked</td></tr>
+        <tr><td>Resend cooldown</td><td>30 seconds</td></tr>
+        <tr><td>Send limit</td><td>5 per hour per number · 10 per hour per IP</td></tr>
+        <tr><td>Verified token</td><td>Single use · valid 10 minutes · this user only</td></tr>
+        <tr><td>Storage</td><td>Only hashes of the code and token are stored</td></tr>
+        <tr><td>Numbers</td><td>+91, 10 digits, one account per number</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Edge cases</h3>
+      <ul>
+        <li><b>Double-tap or network retry:</b> the PRD's Idempotency-Key is checked <i>before</i> the token, so a retry gets back the same order instead of a "code already used" error.</li>
+        <li><b>Order fails after verifying</b> (e.g. out of stock): the token is only used up if the order transaction commits, so the student can fix the cart and try again without a new code.</li>
+        <li><b>SMS late at rush hour:</b> the resend button unlocks after 30 s, and the timer shows how long the code is valid.</li>
+        <li><b>Gateway phone offline:</b> the send fails with a clear message ("Couldn't send the code, try again or ask the counter") and staff get an alert.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Sending SMS for free: your own Android phone</h3>
+  <p>An old Android phone with a SIM runs a free, open-source gateway app (<b>textbee</b> or <b>SMS Gateway for Android</b>). The server calls the app's API, and the phone sends the SMS from its own SIM. There are no per-message fees and no DLT registration.</p>
+  <div class="grid2">
+    <div class="card leaf"><h4>Good for</h4><ul><li>College projects and a single canteen</li><li>Zero cost on a normal prepaid plan</li><li>Setup takes minutes</li></ul></div>
+    <div class="card chili"><h4>Limits to know</h4><ul><li>Most Indian prepaid plans include <b>~100 free SMS a day</b>, so with a code per order that's about 100 orders a day</li><li>The phone must stay on and online</li><li>Codes come from a personal number</li></ul></div>
+  </div>
+  <div class="callout"><p><b>Built to be swapped.</b> The SMS sender sits behind a small interface (<code>src/lib/sms/</code>) with three versions: <code>console</code> (prints the code in the terminal during development), <code>android-gateway</code>, and a paid provider (MSG91 / Twilio) added later in a single file. In development and tests a fixed <code>OTP_DEV_CODE</code> lets the simulator and tests get through; the server refuses to start in production if it's set.</p></div>
+</section>
+
+<!-- ============ 05 LIFECYCLE ============ -->
+<section class="section">
+  <div class="kicker">05 · The order lifecycle</div>
+  <h2>Six statuses. Only these moves are allowed.</h2>
+  <p class="lede">The server rejects any other move with <code>INVALID_TRANSITION</code>. Collected, Cancelled and Rejected are final.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 560 230" width="100%">
+      <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4A463E"/></marker></defs>
+      <g font-size="11" font-weight="700" text-anchor="middle">
+        <rect x="20" y="70" width="100" height="40" rx="20" fill="#F2EBDD" stroke="#1B1A17"/><text x="70" y="94">PLACED</text>
+        <rect x="170" y="70" width="110" height="40" rx="20" fill="#FBEBC6" stroke="#E3A21A"/><text x="225" y="94">PREPARING</text>
+        <rect x="330" y="70" width="90" height="40" rx="20" fill="#DCEBDF" stroke="#1F5E3B"/><text x="375" y="94">READY</text>
+        <rect x="455" y="70" width="95" height="40" rx="20" fill="#1F5E3B"/><text x="502" y="94" fill="#FAF6EE">COLLECTED</text>
+        <rect x="20" y="170" width="100" height="40" rx="20" fill="#fff" stroke="#7A7466" stroke-dasharray="4 3"/><text x="70" y="194" fill="#4A463E">CANCELLED</text>
+        <rect x="170" y="170" width="110" height="40" rx="20" fill="#F6DCD5" stroke="#C23B22"/><text x="225" y="194" fill="#C23B22">REJECTED</text>
+      </g>
+      <g stroke="#4A463E" stroke-width="1.4" fill="none" marker-end="url(#a2)">
+        <path d="M120 90 H168"/><path d="M280 90 H328"/><path d="M420 90 H453"/>
+        <path d="M70 110 V168"/><path d="M100 108 L190 170"/><path d="M225 110 V168"/>
+        <path d="M70 40 V68"/>
+      </g>
+      <circle cx="70" cy="36" r="5" fill="#1B1A17"/>
+      <g font-size="9" fill="#4A463E">
+        <text x="80" y="40">student orders (with OTP)</text>
+        <text x="124" y="84">staff: Start</text><text x="284" y="84">staff: Ready</text><text x="412" y="62">handed over + paid</text>
+        <text x="8" y="142">student</text><text x="8" y="153">cancels</text>
+        <text x="118" y="150">staff</text><text x="118" y="161">rejects</text>
+        <text x="232" y="145">staff rejects</text><text x="232" y="156">(reason required)</text>
+      </g>
+    </svg>
+  </div>
+
+  <table>
+    <tr><th>From → To</th><th>Who</th><th>What else happens</th></tr>
+    <tr><td>Placed → Preparing</td><td>Staff, Admin</td><td>Sets preparingAt. The tracker and queue positions update live.</td></tr>
+    <tr><td>Placed → Cancelled</td><td>The student who owns it</td><td>Limited stock is restored. The order leaves the kitchen board.</td></tr>
+    <tr><td>Placed or Preparing → Rejected</td><td>Staff, Admin (reason 3–140 chars)</td><td>Stock restored. The student sees the reason and "You have not been charged".</td></tr>
+    <tr><td>Preparing → Ready</td><td>Staff, Admin</td><td>Sets readyAt. The student's phone chimes, vibrates and notifies.</td></tr>
+    <tr><td>Ready → Collected</td><td>Staff, Admin</td><td>Sets collectedAt. Means it was paid for and handed over. <b>Creates the bill</b> in the same transaction.</td></tr>
+  </table>
+
+  <h3>Queue position and wait</h3>
+  <p>The queue is today's Placed and Preparing orders, oldest first. <b>Position</b> = place in that list; <b>estimated wait</b> = position × minutes per order (default 3, set by the admin). Every time the queue changes, each waiting student gets their new position, live.</p>
+</section>
+
+
+<section class="section">
+  <div class="kicker">05 · The order lifecycle (continued)</div>
+  <h2>The bill: made the moment food is handed over.</h2>
+  <p class="lede">When staff mark an order <b>Collected</b>, the server creates its bill in the same database transaction as the status change. The bill is stored with the order and <b>never changes afterwards</b>. Cancelled and rejected orders get no bill.</p>
+
+  <div style="display:flex;gap:9mm;align-items:flex-start">
+    <div class="phonewrap"><div class="phone"><div class="scr" style="background:var(--paper-2)">
+      <div class="bar"><span>12:58</span><span>●●● 4G</span></div>
+      <div class="hdr"><b>Bill</b><span style="font:700 5.6pt var(--body);color:var(--leaf)">Save as PDF</span></div>
+      <div style="margin:0 3mm;background:#fff;border-radius:2.5mm;padding:3mm 3mm 3.5mm;box-shadow:0 1mm 3mm rgba(0,0,0,.06)">
+        <div style="text-align:center;border-bottom:.3mm dashed var(--line);padding-bottom:2mm">
+          <b style="font:800 8.5pt var(--display)">Campus Canteen</b><br>
+          <span class="muted">Bill no. CCL-20260923-107</span>
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:.6mm 2mm;padding:2mm 0;border-bottom:.3mm dashed var(--line)">
+          <span class="muted">Name</span><b>Asha Raman</b>
+          <span class="muted">Mobile</span><b>+91 98400 14821</b>
+          <span class="muted">Token</span><b>107</b>
+          <span class="muted">Ordered</span><span>23 Sep 2026, 12:42</span>
+          <span class="muted">Collected</span><span>23 Sep 2026, 12:57</span>
+        </div>
+        <div style="padding:2mm 0;border-bottom:.3mm dashed var(--line)">
+          <div style="display:grid;grid-template-columns:1fr 6mm 9mm 10mm;font:700 5pt var(--body);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;padding-bottom:1mm"><span>Dish</span><span>Qty</span><span style="text-align:right">Rate</span><span style="text-align:right">Amt</span></div>
+          <div style="display:grid;grid-template-columns:1fr 6mm 9mm 10mm;padding:.5mm 0"><span>Masala Dosa</span><span>1</span><span style="text-align:right">50</span><span style="text-align:right">₹50</span></div>
+          <div style="display:grid;grid-template-columns:1fr 6mm 9mm 10mm;padding:.5mm 0"><span>Filter Coffee</span><span>2</span><span style="text-align:right">15</span><span style="text-align:right">₹30</span></div>
+          <div style="display:grid;grid-template-columns:1fr 6mm 9mm 10mm;padding:.5mm 0"><span>Veg Puff</span><span>1</span><span style="text-align:right">20</span><span style="text-align:right">₹20</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-top:2mm;font:800 9pt var(--display)"><span>Total</span><span>₹100</span></div>
+        <div class="muted" style="text-align:center;margin-top:2.5mm;font-size:5.2pt">Handed over by Kitchen staff · Thank you!</div>
+      </div>
+    </div></div><div class="cap">Bill in the student's app</div></div>
+
+    <div style="flex:1">
+      <h3 style="margin-top:0">What's on every bill</h3>
+      <table>
+        <tr><th>Field</th><th>Example</th></tr>
+        <tr><td>Bill number</td><td><code>CCL-20260923-107</code> (date + token, unique)</td></tr>
+        <tr><td>Student name</td><td>Full name, as on the account</td></tr>
+        <tr><td>Mobile number</td><td>The verified number</td></tr>
+        <tr><td>Dishes</td><td>Name, quantity, rate, amount for each</td></tr>
+        <tr><td>Total</td><td>In ₹. No GST line</td></tr>
+        <tr><td>Times</td><td>Ordered, ready, collected (Asia/Kolkata)</td></tr>
+        <tr><td>Handed over by</td><td>The staff member who tapped Collected</td></tr>
+      </table>
+      <div class="callout leaf" style="margin-bottom:0"><p><b>Copied, not linked.</b> Name, phone, dish names and prices are <b>copied into the bill</b> when it's made. If a student changes their number or the admin changes a price next week, old bills stay exactly as they were.</p></div>
+    </div>
+  </div>
+
+  <h3>Who can see a bill</h3>
+  <div class="grid3">
+    <div class="card leaf"><h4>Student</h4><p>"View bill" appears on the tracker the moment the order is Collected (live, no refresh) and stays in My orders. They can print it or save it as PDF.</p></div>
+    <div class="card"><h4>Kitchen staff</h4><p>Can open the bill of any order they handled today, with the phone number masked (••••• •4821).</p></div>
+    <div class="card turmeric"><h4>Admin</h4><p>A new <code>/admin/bills</code> page lists every bill, searchable by date, bill number, name or phone, with full details.</p></div>
+  </div>
+  <p class="muted" style="font-size:8.8pt;margin-top:3mm">No payment method is recorded (cash or UPI stays outside the app, as in the PRD), and there's no GST. Both can be added later without changing old bills.</p>
+</section>
+
+<!-- ============ 06 KITCHEN ============ -->
+<section class="section">
+  <div class="kicker">06 · The kitchen</div>
+  <h2>The kitchen board, on a phone.</h2>
+  <p class="lede">The PRD designed the board as three side-by-side columns for a tablet. On a phone the columns become three tabs with live counts, and the Collect box stays pinned at the top because it's used most at rush hour.</p>
+
+  <div style="display:flex;gap:9mm;align-items:flex-start">
+    <div class="phonewrap"><div class="phone"><div class="scr">
+      <div class="bar"><span>12:44</span><span>●●● Wi-Fi</span></div>
+      <div class="hdr"><b>Kitchen</b><span class="live">Live</span></div>
+      <div class="collect"><span>Collect token…</span><b>Collect</b></div>
+      <div class="kcols"><span class="on">New · 2</span><span>Preparing · 4</span><span>Ready · 3</span></div>
+      <div class="kcard new"><div class="top"><b>112</b><span class="timer">0:08</span></div><div><b>Asha</b> · 1× Veg Meals, 1× Tea</div><div class="kact"><div class="btn">Start</div><span class="more">⋯</span></div></div>
+      <div class="kcard"><div class="top"><b>109</b><span class="timer amber">11:42</span></div><div><b>Ravi</b> · 2× Idli, 1× Filter Coffee</div><div class="note">Less spicy chutney</div><div class="kact"><div class="btn">Start</div><span class="more">⋯</span></div></div>
+      <div class="kcard"><div class="top"><b>104</b><span class="timer red">21:05</span></div><div><b>Meena</b> · 1× Chicken Biryani</div><div class="kact"><div class="btn">Start</div><span class="more">⋯</span></div></div>
+    </div></div><div class="cap">Board: tabs replace columns</div></div>
+
+    <div style="flex:1">
+      <h3 style="margin-top:0">How it behaves</h3>
+      <ul>
+        <li><b>New orders</b> flash for 3 seconds and play a tone. The tab title shows "(2) New · Kitchen". Sound starts only after a tap on "Enable sound", because browsers block autoplay.</li>
+        <li><b>One big button per card:</b> Start → Ready → Collected. Reject is under the ⋯ menu, with quick reasons ("Item ran out", "Kitchen closing") or a custom one.</li>
+        <li><b>Timers</b> tick every second: neutral under 10 min, amber from 10 to 20, red after 20. Ready cards older than 15 minutes get an "Uncollected" badge.</li>
+        <li><b>Optimistic:</b> the card moves the instant you tap. If another staff member got there first, it moves back and a toast says "Already updated by another staff member".</li>
+        <li><b>Collect box:</b> type 107 and press Enter to mark that Ready order Collected. It shows an error if 107 isn't Ready.</li>
+        <li><b>Swipe</b> between the New, Preparing and Ready tabs. The count on each tab updates live, so staff can see work waiting in other tabs.</li>
+        <li><b>Done today</b> drawer: the last 20 finished orders.</li>
+        <li>If the connection drops for more than 3 s, a banner says "Reconnecting, board may be out of date".</li>
+      </ul>
+      <div class="callout leaf"><p>Privacy: the kitchen sees only a student's <b>first name</b>, never their email, roll number or phone.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 STOCK & ADMIN ============ -->
+<section class="section">
+  <div class="kicker">07 · Stock, status and admin</div>
+  <h2>Running the canteen from a phone.</h2>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>Stock and status · <code>/kitchen/stock</code></h4>
+      <ul>
+        <li>Canteen <b>Open / Closed</b> switch with an optional message ("Back at 2 PM"). When closed, every menu shows the banner and ordering is disabled.</li>
+        <li>Every item has an availability switch and a stock number (blank means unlimited).</li>
+        <li>Changes save automatically after 500 ms and reach every open menu live.</li>
+        <li>Items with 5 or fewer left are highlighted.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Live dashboard · <code>/admin</code></h4>
+      <ul>
+        <li>Stat cards: orders today, revenue today (collected orders), active orders, average prep time, cancelled plus rejected.</li>
+        <li>Orders per hour (bar chart) and top 5 items today.</li>
+        <li>Who's online: kitchen phones and students.</li>
+        <li>Updates at most once per second.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Menu management · <code>/admin/menu</code></h4>
+      <ul>
+        <li>Create, edit and reorder categories and items (name, description, price, veg, prep minutes, stock, availability).</li>
+        <li>Each item is linked to its <b>3D model</b> and still image.</li>
+        <li>Deleting archives an item: hidden from the menu, kept for order history.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Users and settings · <code>/admin/users</code>, <code>/admin/settings</code></h4>
+      <ul>
+        <li>Search users by name, email, roll number or phone. Create staff accounts and change roles.</li>
+        <li>Settings: canteen name, minutes per order, max active orders per student, open/closed.</li>
+        <li><b>New:</b> the SMS gateway's status (online or offline, codes sent today against the daily limit).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Mobile-first layout rules</h3>
+  <ul>
+    <li>Everything is designed from <b>360 px</b> wide upwards. On larger screens it gets more room, not a different app.</li>
+    <li>Main actions sit in the bottom third of the screen, within thumb reach. Tap targets are at least 44 px.</li>
+    <li>Tables on admin pages become stacked cards on a phone. The chart scrolls sideways inside its own box.</li>
+    <li>Dark mode follows the system setting. Every page has a Live / Reconnecting / Offline badge in the header.</li>
+  </ul>
+</section>
+
+<!-- ============ 08 REALTIME ============ -->
+<section class="section">
+  <div class="kicker">08 · How "live" works</div>
+  <h2>Commands go in over HTTP. Events come out over WebSocket.</h2>
+  <p class="lede">Every change (placing an order, tapping Ready, switching an item off) is an HTTP request the server checks and saves in a transaction. Only <i>after</i> it's saved does the server push an event to the right people over Socket.IO. Phones never write through the socket.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 560 250" width="100%" style="max-height:58mm">
+      <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker>
+      <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1F5E3B"/></marker></defs>
+      <g font-size="10" font-weight="700" text-anchor="middle">
+        <rect x="10" y="20" width="110" height="36" rx="8" fill="#DCEBDF"/><text x="65" y="42">Student phones</text>
+        <rect x="10" y="100" width="110" height="36" rx="8" fill="#FBEBC6"/><text x="65" y="122">Kitchen phones</text>
+        <rect x="10" y="180" width="110" height="36" rx="8" fill="#F6DCD5"/><text x="65" y="202">Admin</text>
+        <rect x="200" y="60" width="150" height="116" rx="10" fill="#1B1A17"/>
+        <text x="275" y="90" fill="#FAF6EE">Next.js server</text><text x="275" y="106" fill="#B9BCC0" font-weight="500" font-size="9">pages + route handlers</text>
+        <rect x="216" y="120" width="118" height="40" rx="6" fill="#2F7A4F"/><text x="275" y="137" fill="#fff">Socket.IO</text><text x="275" y="151" fill="#DCEBDF" font-weight="500" font-size="8.5">same port 3000</text>
+        <rect x="420" y="72" width="120" height="40" rx="8" fill="#F2EBDD" stroke="#CFC5B0"/><text x="480" y="90">Prisma + SQLite</text><text x="480" y="104" font-size="8.5" font-weight="500">single source of truth</text>
+        <rect x="420" y="150" width="120" height="40" rx="8" fill="#F2EBDD" stroke="#CFC5B0"/><text x="480" y="168">Android gateway</text><text x="480" y="182" font-size="8.5" font-weight="500">sends OTP SMS</text>
+      </g>
+      <g stroke="#1B1A17" stroke-width="1.3" fill="none" marker-end="url(#a3)">
+        <path d="M120 34 C 160 34, 170 70, 198 76"/><path d="M120 114 C 150 110, 170 100, 198 98"/><path d="M120 194 C 160 194, 170 176, 198 168"/>
+        <path d="M350 92 H418"/><path d="M350 160 H418"/>
+      </g>
+      <g stroke="#1F5E3B" stroke-width="1.6" stroke-dasharray="5 3" fill="none" marker-end="url(#a4)">
+        <path d="M216 132 C 170 132, 160 50, 122 46"/><path d="M216 140 C 180 140, 160 128, 122 126"/><path d="M216 150 C 180 160, 160 204, 122 206"/>
+      </g>
+      <g font-size="9"><text x="130" y="16" fill="#1B1A17">HTTP commands →</text><text x="130" y="238" fill="#1F5E3B">← live events after the database commits</text></g>
+    </svg>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h3 style="margin-top:0">Rooms: who hears what</h3><style>.rt td{padding:1.1mm 2mm;font-size:8.6pt}</style>
+      <table class="rt">
+        <tr><th>Room</th><th>Members</th></tr>
+        <tr><td><code>public</code></td><td>Every connection: menu and open/closed</td></tr>
+        <tr><td><code>user:{id}</code></td><td>All tabs of one student: their orders and queue position</td></tr>
+        <tr><td><code>kitchen</code></td><td>Staff and admin: new and updated orders</td></tr>
+        <tr><td><code>admin</code></td><td>Admins: live stats and presence</td></tr>
+      </table>
+      <p class="muted" style="font-size:8.8pt">The server puts each connection in its rooms based on the login cookie. Clients can't choose. The PRD's <code>display</code> room is removed along with the TV.</p>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Events</h3>
+      <table class="rt">
+        <tr><th>Event</th><th>Sent when</th></tr>
+        <tr><td><code>order:created</code></td><td>An order is placed</td></tr>
+        <tr><td><code>order:updated</code></td><td>Any status change</td></tr>
+        <tr><td><code>queue:update</code></td><td>The queue gains or loses an order</td></tr>
+        <tr><td><code>menu:item-updated</code></td><td>Stock, availability, price or name changes</td></tr>
+        <tr><td><code>menu:changed</code></td><td>Items or categories added, archived or reordered</td></tr>
+        <tr><td><code>canteen:status</code></td><td>Open/closed or settings change</td></tr>
+        <tr><td><code>stats:update</code></td><td>Any order change, at most once a second</td></tr>
+        <tr><td><code>presence:update</code></td><td>Someone connects or disconnects</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout leaf" style="margin:0"><p><b>Snapshot + events.</b> Each screen first loads a <b>snapshot</b> over HTTP, then applies events on top of it. Whenever the connection comes back (after a dropped signal or a server restart), the screen reloads its snapshot, so anything missed while offline shows up. No screen ever polls on a timer.</p></div>
+</section>
+
+<!-- ============ 09 CORRECTNESS ============ -->
+<section class="section">
+  <div class="kicker">09 · Staying correct</div>
+  <h2>Correct at the lunch rush, not only in the demo.</h2>
+  <p class="lede">The hard part isn't the happy path. It's two people tapping at the same moment, and phones losing signal in a crowded canteen.</p>
+
+  <table>
+    <tr><th style="width:38%">What happens</th><th>How the app stays correct</th></tr>
+    <tr><td>Two students order the last Samosa at the same moment</td><td>Stock is reduced with a conditional update ("only if stock ≥ quantity") inside the order transaction. Exactly one order succeeds; the other gets <code>OUT_OF_STOCK</code>. Stock never goes below 0.</td></tr>
+    <tr><td>Two staff tap Ready on the same card</td><td>Every order has a version number. The second tap carries an out-of-date version, gets <code>VERSION_CONFLICT</code>, and its card moves back to the server's state.</td></tr>
+    <tr><td>Student double-taps Place order, or the network retries</td><td>An Idempotency-Key is created when the cart opens, and the database allows each key only once. The retry returns the same order.</td></tr>
+    <tr><td>The same OTP token is used for two orders</td><td>Using up the token is also a conditional update inside the order transaction. Only one order can use it; the other gets <code>OTP_REQUIRED</code>.</td></tr>
+    <tr><td>Two orders need a token number at once</td><td>A daily counter is incremented inside the transaction, and the database won't accept a duplicate (date, token). Tokens restart at 101 each day.</td></tr>
+    <tr><td>Events arrive out of order</td><td>The phone ignores any order event whose version isn't newer than what it already has.</td></tr>
+    <tr><td>A price is changed in the app code</td><td>Ignored. Totals are always calculated from database prices.</td></tr>
+    <tr><td>Many writes hit SQLite at once</td><td>WAL mode and a 5-second busy timeout are set at startup.</td></tr>
+  </table>
+
+  <h3>When the connection drops</h3>
+  <div class="grid3">
+    <div class="card turmeric"><h4>Reconnecting</h4><p>The header badge turns amber. Socket.IO retries automatically with backoff.</p></div>
+    <div class="card leaf"><h4>Back online</h4><p>Every screen reloads its snapshot, so changes made while it was offline appear without a manual refresh.</p></div>
+    <div class="card"><h4>Server restart</h4><p>All phones reconnect and resync by themselves. On shutdown the server closes sockets and the database cleanly.</p></div>
+  </div>
+
+  <h3>Performance targets</h3>
+  <ul>
+    <li>95% of events reach phones within <b>1 second</b> on the local network.</li>
+    <li><b>200</b> connected phones on a normal laptop.</li>
+    <li>The student menu is usable within <b>2 seconds</b> on a mid-range phone over 4G. The 3D stills are small images, and the Three.js viewer only loads when a dish is opened.</li>
+  </ul>
+</section>
+
+<!-- ============ 10 SECURITY ============ -->
+<section class="section">
+  <div class="kicker">10 · Security and privacy</div>
+  <h2>Trust the server, never the phone.</h2>
+  <div class="grid2">
+    <div>
+      <ul>
+        <li><b>Sessions:</b> a signed JWT in an httpOnly, SameSite=Lax cookie, valid 7 days (Secure in production). The server won't start without a strong secret.</li>
+        <li><b>Passwords</b> are hashed with bcrypt. Login errors never reveal whether an email exists.</li>
+        <li><b>Role checks</b> happen in every route handler and server layout, never only in the UI.</li>
+        <li><b>Server-side checks:</b> prices, roles, stock, status and OTP are all checked again on the server.</li>
+        <li>Write requests accept only JSON, which blocks cross-site form posts.</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li><b>Rate limits:</b> 5 orders a minute per user, 10 logins a minute per IP, plus the OTP send limits (section 04). Too many requests get <code>RATE_LIMITED</code>.</li>
+        <li><b>OTP:</b> codes and tokens are stored only as hashes. Codes are never logged in production.</li>
+        <li><b>Privacy:</b> the kitchen sees first names only. Only admins see email, roll number and phone. Phone numbers are masked on screen (••••• •4821).</li>
+        <li><b>Redirects:</b> the <code>?next=</code> redirect accepts only relative paths.</li>
+        <li>Error responses never include stack traces.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Accessibility</h3>
+  <ul>
+    <li>WCAG 2.1 AA contrast, visible focus rings, and a kitchen board that works with a keyboard.</li>
+    <li>Status is never shown by colour alone; every state has text or an icon. Changes are announced with an aria-live region.</li>
+    <li>Reduced motion turns off pulses, slide animations and 3D auto-rotation, and shows 3D stills instead of live models.</li>
+    <li>The OTP inputs work as one field for screen readers and support the phone's automatic code fill.</li>
+  </ul>
+</section>
+
+<!-- ============ 11 DESIGN ============ -->
+<section class="section">
+  <div class="kicker">11 · Design direction <span class="pill draft" style="margin-left:2mm">proposal</span></div>
+  <h2>Banana leaf, turmeric, chili.</h2>
+  <p class="lede">The look draws on a real South Indian college canteen: banana-leaf green, turmeric yellow, chili red and a warm off-white like a paper menu. The food is the hero: every dish is shown on its own, with no plates or props. The aim is a friendly, appetising app that feels local, not a generic food-delivery template.</p>
+
+  <div class="swatches">
+    <div class="sw"><div class="c" style="background:#1F5E3B"></div><div class="l"><b>Banana leaf</b><code>#1F5E3B</code> primary, veg</div></div>
+    <div class="sw"><div class="c" style="background:#E3A21A"></div><div class="l"><b>Turmeric</b><code>#E3A21A</code> tokens, "preparing"</div></div>
+    <div class="sw"><div class="c" style="background:#C23B22"></div><div class="l"><b>Chili</b><code>#C23B22</code> non-veg, errors</div></div>
+    <div class="sw"><div class="c" style="background:linear-gradient(135deg,#E9EBED,#A9AEB3)"></div><div class="l"><b>Steel grey</b><code>#B9BCC0</code> borders, dividers</div></div>
+    <div class="sw"><div class="c" style="background:#FAF6EE"></div><div class="l"><b>Menu paper</b><code>#FAF6EE</code> background</div></div>
+    <div class="sw"><div class="c" style="background:#151412"></div><div class="l"><b>Tawa</b><code>#151412</code> dark mode</div></div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h3 style="margin-top:0">Typography</h3>
+      <p><span style="font:800 18pt var(--display)">Bricolage Grotesque</span><br><span class="muted">Headings and big token numbers: warm, a little quirky, very legible.</span></p>
+      <p><span style="font:600 12pt var(--body)">Figtree</span><br><span class="muted">Body text and UI: clear at small sizes on phones.</span></p>
+      <p><span style="font:700 11pt var(--mono)">107 · 11:42</span><br><span class="muted">Tabular numbers for timers and tokens, so digits don't jump.</span></p>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Motion</h3>
+      <ul>
+        <li>Cards slide between kitchen tabs. New orders arrive with a soft turmeric flash.</li>
+        <li>The tracker stepper fills like a progress line. Ready bursts into full-screen green.</li>
+        <li>Spring physics on sheets and drags so they feel physical.</li>
+        <li>Everything respects reduced motion.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>3D food: the hybrid approach (agreed)</h3>
+  <div class="grid3">
+    <div class="card"><h4>1 · One model per dish</h4><p>Each of the 16 dishes gets a 3D model of <b>the food alone, with no plate</b>, floating over a soft shadow with matching lighting. Drinks keep their cup.</p></div>
+    <div class="card"><h4>2 · Stills for the menu</h4><p>A render script photographs each model once into a small WebP (~30 KB). The menu grid uses these, so it stays fast on 4G.</p></div>
+    <div class="card"><h4>3 · Live viewer on tap</h4><p>Tapping a dish loads the Three.js viewer (react-three-fiber + drei): drag to spin, pinch to zoom, steam on hot items, soft shadow.</p></div>
+  </div>
+  <div class="callout"><p><b>Still to decide: the style of the models.</b> (a) <b>Stylised, built in code</b>: clay or toy-like, tiny files, perfectly consistent, fully controllable. (b) <b>Realistic, AI-generated from food photos</b> (e.g. image-to-3D models): closer to real food, textured, ~1–3 MB each, and the quality varies so they need cleanup. Side-by-side previews will be shown before choosing.</p></div>
+</section>
+
+<!-- ============ 12 DATA & API ============ -->
+<section class="section">
+  <div class="kicker">12 · Data and API</div>
+  <h2>What's added to the PRD's contract.</h2>
+  <p class="lede">All PRD models, endpoints, event names and error codes stay exactly as written, except the display pieces, which are removed. These are the additions for phone verification and 3D.</p>
+
+  <h3 style="margin-top:4mm">Data model changes</h3>
+  <table class="st">
+    <tr><th>Model</th><th>Change</th></tr>
+    <tr><td><code>User</code></td><td><b>+ phone</b> <code>String? @unique</code>: required for students at registration (+91, 10 digits); optional for staff and admin.</td></tr>
+    <tr><td><code>Bill</code> (new)</td><td><code>id, billNumber @unique, orderId @unique, tokenNumber, studentName, studentPhone, totalPaise, orderedAt, readyAt, collectedAt, collectedByName, createdAt</code>: copied values, never updated</td></tr>
+    <tr><td><code>BillLine</code> (new)</td><td><code>id, billId, name, quantity, unitPricePaise, lineTotalPaise</code></td></tr>
+    <tr><td><code>OtpChallenge</code> (new)</td><td><code>id, userId, phone, codeHash, expiresAt, attempts, verifiedAt?, tokenHash?, tokenExpiresAt?, usedAt?, orderId?, createdAt</code></td></tr>
+    <tr><td><code>MenuItem</code></td><td><b>+ modelUrl</b> <code>String?</code> (3D model) · the existing <code>imageUrl</code> holds the rendered still.</td></tr>
+  </table>
+
+  <h3 style="margin-top:4mm">New endpoints</h3>
+  <table class="st">
+    <tr><th>Method</th><th>Path</th><th>Who</th><th>Purpose</th></tr>
+    <tr><td>POST</td><td><code>/api/otp/send</code></td><td>Student</td><td>Send a code to the account's phone. Returns expiry and resend time.</td></tr>
+    <tr><td>POST</td><td><code>/api/otp/verify</code></td><td>Student</td><td>Body <code>{ code }</code>. Returns <code>{ otpToken, expiresAt }</code>.</td></tr>
+    <tr><td>POST</td><td><code>/api/orders</code></td><td>Student</td><td><b>Changed:</b> body also needs <code>otpToken</code>. The Idempotency-Key header is still required.</td></tr>
+    <tr><td>GET</td><td><code>/api/orders/[id]/bill</code></td><td>Owner, Staff (masked), Admin</td><td>The bill of a Collected order; 404 before that.</td></tr>
+    <tr><td>GET</td><td><code>/api/admin/bills</code></td><td>Admin</td><td>Search bills by date, bill number, name or phone (paginated).</td></tr>
+    <tr><td>GET</td><td><code>/api/admin/sms-status</code></td><td>Admin</td><td>Gateway online or offline, and codes sent today.</td></tr>
+  </table>
+
+  <h3 style="margin-top:4mm">New error codes</h3>
+  <table class="st">
+    <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+    <tr><td><code>OTP_REQUIRED</code></td><td>403</td><td>Order sent without a valid, unused, unexpired OTP token</td></tr>
+    <tr><td><code>OTP_INVALID</code></td><td>400</td><td>Wrong or expired code; details include tries left</td></tr>
+    <tr><td><code>OTP_LOCKED</code></td><td>429</td><td>5 wrong tries: request a new code</td></tr>
+    <tr><td><code>PHONE_TAKEN</code></td><td>409</td><td>That number already belongs to another account</td></tr>
+    <tr><td><code>SMS_SEND_FAILED</code></td><td>503</td><td>The gateway couldn't send the SMS</td></tr>
+  </table>
+</section>
+
+
+<section class="section">
+  <div class="kicker">12 · Data and API (continued)</div>
+  <h2>Where the order records are stored.</h2>
+  <p class="lede">Every order is stored in <b>one place: a database file on the computer or server running the app.</b> Phones only show copies. If a phone is lost or the app is closed, no order data is lost.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 560 150" width="100%" style="max-height:36mm">
+      <defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1B1A17"/></marker></defs>
+      <g font-size="10" font-weight="700" text-anchor="middle">
+        <rect x="10" y="20" width="120" height="34" rx="8" fill="#DCEBDF"/><text x="70" y="41">Student phones</text>
+        <rect x="10" y="96" width="120" height="34" rx="8" fill="#FBEBC6"/><text x="70" y="117">Kitchen / admin</text>
+        <rect x="200" y="45" width="140" height="60" rx="10" fill="#1B1A17"/><text x="270" y="72" fill="#FAF6EE">App server</text><text x="270" y="88" fill="#B9BCC0" font-size="8.5" font-weight="500">checks, then saves</text>
+        <path d="M410 40 h120 v70 a60 10 0 0 1 -120 0 z" fill="#F2EBDD" stroke="#CFC5B0"/><ellipse cx="470" cy="40" rx="60" ry="10" fill="#FAF6EE" stroke="#CFC5B0"/>
+        <text x="470" y="72">prisma/dev.db</text><text x="470" y="88" font-size="8.5" font-weight="500">SQLite database file</text>
+      </g>
+      <g stroke="#1B1A17" stroke-width="1.3" fill="none" marker-end="url(#a5)"><path d="M130 37 C 165 37, 170 60, 198 64"/><path d="M130 113 C 165 113, 170 92, 198 88"/><path d="M340 75 H408"/></g>
+      <text x="374" y="68" font-size="8.5" text-anchor="middle">writes</text>
+    </svg>
+    <div class="figcap">Phones send requests. Only the server writes to the database file.</div>
+  </div>
+
+  <h3>What's recorded for each order</h3>
+  <table class="st">
+    <style>.st td{padding:1.1mm 2.2mm;font-size:8.8pt}</style><tr><th style="width:24%">Table</th><th>What it holds</th></tr>
+    <tr><td><code>Order</code></td><td>Token number, business date, status, total (in paise), note, reject reason, which student, and the time of every step: placed, preparing, ready, collected, closed.</td></tr>
+    <tr><td><code>OrderItem</code></td><td>Each line of the order: item, quantity, and a <b>copy of the name and price at the time of ordering</b>, so later menu edits never change old orders.</td></tr>
+    <tr><td><code>DailyCounter</code></td><td>The last token number used each day (starts at 101).</td></tr>
+    <tr><td><code>Bill</code>, <code>BillLine</code></td><td>The bill of every collected order: bill number, student name and mobile, dishes with rate and amount, total, and the times. Never edited.</td></tr>
+    <tr><td><code>OtpChallenge</code></td><td>Each verification: the phone number, a hash of the code (never the code itself), tries, and which order it was used for.</td></tr>
+    <tr><td><code>User</code>, <code>MenuItem</code>, <code>Settings</code></td><td>Accounts, the menu and stock, and canteen settings.</td></tr>
+  </table>
+
+  <div class="grid3">
+    <div class="card leaf"><h4>How long it's kept</h4><ul><li><b>Forever.</b> Nothing is deleted automatically.</li><li>Cancelled and rejected orders are kept, with their reason.</li><li>Students see 30 days in My orders; older orders stay in the database.</li></ul></div>
+    <div class="card"><h4>What stays on phones</h4><ul><li>Only the <b>cart</b>, until the order is placed.</li><li>A temporary copy of the screen that disappears when the app closes.</li><li>The gateway phone keeps the sent code SMS.</li></ul></div>
+    <div class="card chili"><h4>Keep the file safe</h4><ul><li>Back up by copying <code>dev.db</code> while the app is stopped.</li><li><code>npm run db:reset</code> <b>wipes all orders</b>.</li><li>Free cloud hosts wipe the disk on redeploy, so use a persistent disk or switch to <b>PostgreSQL</b> (a one-line change).</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 13 TECH STACK ============ -->
+<section class="section">
+  <div class="kicker">13 · Tech stack</div>
+  <h2>One Next.js project, one Node process.</h2>
+  <table>
+    <tr><th>Layer</th><th>Choice</th></tr>
+    <tr><td>Framework</td><td>Next.js (latest stable), App Router, TypeScript strict</td></tr>
+    <tr><td>Real-time</td><td>Socket.IO 4 on the same HTTP server and port, via a custom <code>server.ts</code> run with tsx</td></tr>
+    <tr><td>Database</td><td>SQLite with Prisma 6 (can switch to PostgreSQL by changing the provider)</td></tr>
+    <tr><td>Auth</td><td>JWT (jose) in an httpOnly cookie · bcryptjs</td></tr>
+    <tr><td>OTP / SMS <span class="new-tag">new</span></td><td>Swappable SMS module: console (dev) · Android gateway (textbee / SMS Gateway for Android) · paid provider later</td></tr>
+    <tr><td>3D <span class="new-tag">new</span></td><td>Three.js via react-three-fiber + drei, loaded only when needed · glTF models compressed with Draco/Meshopt · render script for WebP stills</td></tr>
+    <tr><td>Validation</td><td>Zod, shared by the API and the forms</td></tr>
+    <tr><td>Client data</td><td>TanStack Query v5 (socket events update its cache) · Zustand cart saved on the phone</td></tr>
+    <tr><td>UI</td><td>Tailwind CSS, shadcn/ui, lucide icons, sonner toasts, Motion for springs</td></tr>
+    <tr><td>Charts, dates</td><td>Recharts · date-fns + date-fns-tz (Asia/Kolkata)</td></tr>
+    <tr><td>Tests</td><td>Vitest (unit + integration) · Playwright (multi-browser end to end)</td></tr>
+  </table>
+  <div class="callout chili"><p><b>Hosting:</b> needs a server that keeps a Node process running, such as Render, Railway, a VPS or your laptop on the campus Wi-Fi. Vercel can't hold WebSocket connections open, so it isn't a target. For the demo, phones on the same Wi-Fi open <code>http://&lt;laptop-IP&gt;:3000</code>.</p></div>
+  <div class="callout"><p><b>Project location:</b> keep the code <b>outside OneDrive</b> (e.g. <code>C:\Users\sreev\projects\campus-canteen-live</code>). OneDrive tries to sync <code>node_modules</code> and the SQLite file, which is slow and can lock files.</p></div>
+</section>
+
+<!-- ============ 14 BUILD PLAN ============ -->
+<section class="section">
+  <div class="kicker">14 · Build plan</div>
+  <h2>Nine milestones, each one checked.</h2>
+  <p class="lede" style="margin-bottom:2mm">After every milestone: typecheck, lint and tests must pass, then a commit.</p>
+
+  <div class="milestone"><div class="n">M1</div><div><h4>Scaffold and live socket</h4>Next.js + Tailwind + shadcn, Prisma schema (with phone and OTP tables), seed data, <code>server.ts</code> with Socket.IO, header connection badge, design tokens and fonts.<div class="done"><b>Done when:</b> setup + dev work on a fresh clone; the badge goes green, amber when the server stops, and green again after a restart.</div></div></div>
+  <div class="milestone"><div class="n">M2</div><div><h4>Auth and roles <span class="new-tag">+ phone</span></h4>Register (with a unique phone number), login, logout, me, JWT cookie, role layouts, socket auth and rooms, role redirects.<div class="done"><b>Done when:</b> each seeded account lands on its home page; students are kept out of /kitchen; the wrong role gets 403.</div></div></div>
+  <div class="milestone"><div class="n">M3</div><div><h4>Menu, cart and menu admin</h4>GET /api/menu, the mobile menu with stills (placeholder renders at first), saved cart, admin menu CRUD, /kitchen/stock.<div class="done"><b>Done when:</b> a student can build a cart; admin edits show after a refresh.</div></div></div>
+  <div class="milestone"><div class="n">M4</div><div><h4>OTP and ordering <span class="new-tag">+ OTP</span></h4>SMS module (console + Android gateway), send and verify with limits, placeOrder with the token used up in the transaction, tracker, My orders, cancel.<div class="done"><b>Done when:</b> no order without a valid code; token 101; stock drops; a double submit makes one order; cancel restores stock.</div></div></div>
+  <div class="milestone"><div class="n">M5</div><div><h4>Real-time core</h4>Emitters, mobile kitchen board with transitions and version checks, Collect box, live order tracking, <b>bill generated on Collected</b> with the bill view and admin bills list.<div class="done"><b>Done when:</b> with a student phone and a kitchen phone side by side, every change shows on both within 1 s, and collecting an order shows its bill on the student's phone.</div></div></div>
+  <div class="milestone"><div class="n">M6</div><div><h4>Live extras</h4>Live menu updates, open/closed, queue position and wait, sounds and vibration, notifications, admin dashboard with stats and presence.<div class="done"><b>Done when:</b> every Live item works in two browsers side by side.</div></div></div>
+  <div class="milestone"><div class="n">M7</div><div><h4>3D food <span class="new-tag">new</span></h4>16 dish models in the chosen style, render script for the stills, live Three.js viewer sheet, fallbacks for low-power devices, no WebGL and reduced motion.<div class="done"><b>Done when:</b> the menu is usable in &lt; 2 s on throttled 4G and the viewer runs smoothly on a mid-range phone.</div></div></div>
+  <div class="milestone"><div class="n">M8</div><div><h4>Resilience and hardening</h4>Refetch on reconnect, out-of-order protection, optimistic kitchen actions with rollback, rate limits (including OTP), error shape everywhere, graceful shutdown, SQLite settings.<div class="done"><b>Done when:</b> stopping the server for 10 s while staff change orders ends with every phone correct after the restart.</div></div></div>
+  <div class="milestone"><div class="n">M9</div><div><h4>Tests, simulator and docs</h4>All PRD tests (minus display) plus OTP tests, simulator using the dev code, README with LAN demo and gateway phone setup, DECISIONS.md.<div class="done"><b>Done when:</b> every acceptance check passes and <code>npm run simulate -- --kitchen</code> runs a live demo.</div></div></div>
+</section>
+
+<!-- ============ 15 DECISIONS ============ -->
+<section class="section">
+  <div class="kicker">15 · Decisions</div>
+  <h2>What's agreed, and what's still open.</h2>
+
+  <h3>Agreed</h3>
+  <table>
+    <tr><th style="width:32%">Decision</th><th>Choice</th></tr>
+    <tr><td>Platform</td><td>Mobile web app, mobile-first for every role</td></tr>
+    <tr><td>Counter TV</td><td>Removed. The pickup signal is on the student's phone</td></tr>
+    <tr><td>3D scope</td><td>Food only</td></tr>
+    <tr><td>3D approach</td><td>Hybrid: stills on the menu, live Three.js viewer on tap</td></tr>
+    <tr><td>3D presentation</td><td>Food only, no plates: each dish floats over a soft shadow</td></tr>
+    <tr><td>Anti-prank</td><td>4-digit SMS code before <b>every</b> order; one account per phone number</td></tr>
+    <tr><td>SMS sending</td><td>Free: own Android phone as the gateway; console in development</td></tr>
+    <tr><td>Bill</td><td>Created on Collected: bill no., name, mobile, dishes, rates, total, times. No payment method, no GST</td></tr>
+    <tr><td>Engineering base</td><td>The PRD's contract, milestones and tests, adjusted as above</td></tr>
+  </table>
+
+  <h3>Still open</h3>
+  <table>
+    <tr><th style="width:32%">Question</th><th>Options · recommendation</th></tr>
+    <tr><td>Style of the 3D food models</td><td>Stylised and built in code <i>vs</i> realistic AI-generated from photos. Previews first, then choose.</td></tr>
+    <tr><td>Visual direction</td><td>"Banana leaf, turmeric, chili" (section 11), proposed and waiting for your approval</td></tr>
+    <tr><td>Gateway app</td><td>textbee <i>vs</i> SMS Gateway for Android. Recommend <b>SMS Gateway for Android</b> in local mode (no account needed)</td></tr>
+    <tr><td>Project folder</td><td>Recommend <code>C:\Users\sreev\projects\campus-canteen-live</code> (outside OneDrive)</td></tr>
+  </table>
+
+
+
+  <h3>Removed from the PRD</h3>
+  <p><code>/display</code> page · <code>GET /api/display</code> · <code>display</code> room · <code>display:update</code> event · <code>DisplaySnapshot</code> type · QR code · display counts in presence · display socket tests.</p>
+  <div class="callout leaf" style="margin-top:5mm"><p><b>Next step:</b> once the open questions are settled and you approve this document, the plan becomes the implementation spec and building starts at M1.</p></div>
+</section>
+
+</body>
+</html>
