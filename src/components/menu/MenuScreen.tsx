@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ShoppingBag, Store } from "lucide-react";
@@ -149,6 +150,13 @@ export function MenuScreen({ firstName }: { firstName: string }) {
           </section>
         ))}
       </div>
+
+      <p className="mt-10 text-center text-xs text-muted-foreground">
+        Food photos from Wikimedia Commons ·{" "}
+        <Link href="/credits" className="font-semibold underline-offset-4 hover:underline">
+          Credits
+        </Link>
+      </p>
 
       {/* Sticky cart bar, above the bottom tab bar */}
       {count > 0 && (

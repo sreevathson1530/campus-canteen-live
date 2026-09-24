@@ -61,7 +61,13 @@ function LoginForm() {
         </Link>
       </p>
 
-      <details className="mt-8 rounded-xl border bg-card p-3 text-sm">
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        <Link href="/credits" className="underline-offset-4 hover:underline">
+          Photo credits
+        </Link>
+      </p>
+
+      <details className="mt-4 rounded-xl border bg-card p-3 text-sm">
         <summary className="cursor-pointer font-semibold">Demo accounts</summary>
         <ul className="mt-2 grid gap-1.5">
           {DEMO.map(([role, e, p]) => (

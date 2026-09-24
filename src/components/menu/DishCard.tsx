@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import type { MenuItemDTO } from "@/lib/realtime/events";
 import { formatRupees } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { stillFor } from "@/lib/dish-keys";
 import { DishImage } from "./DishImage";
 import { QtyStepper } from "./QtyStepper";
 import { VegMark } from "./VegMark";
@@ -39,7 +40,7 @@ export function DishCard({
       )}
     >
       <button type="button" onClick={onOpen} className="text-left" aria-label={`${item.name}, view in 3D`}>
-        <DishImage name={item.name} src={item.imageUrl} priority={priority} className="aspect-[5/4] w-full" />
+        <DishImage name={item.name} src={item.imageUrl} still={stillFor(item.modelKey)} priority={priority} className="aspect-[5/4] w-full" />
         {(soldOut || low) && (
           <span
             className={cn(

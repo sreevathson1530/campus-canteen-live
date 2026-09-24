@@ -13,6 +13,7 @@ import type { MenuSnapshot } from "@/lib/menu/service";
 import type { MenuItemDTO } from "@/lib/realtime/events";
 import { formatRupees } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { stillFor } from "@/lib/dish-keys";
 import { DishImage } from "@/components/menu/DishImage";
 
 type SaveState = "idle" | "saving" | "saved";
@@ -63,7 +64,7 @@ function StockRow({ item }: { item: MenuItemDTO }) {
   const low = item.stock !== null && item.stock <= 5;
   return (
     <li className={cn("flex items-center gap-3 rounded-2xl border bg-card p-3", low && "border-turmeric bg-turmeric-soft/40", !item.isAvailable && "opacity-70")}>
-      <DishImage name={item.name} src={item.imageUrl} className="size-12 shrink-0 rounded-xl" />
+      <DishImage name={item.name} src={item.imageUrl} still={stillFor(item.modelKey)} className="size-12 shrink-0 rounded-xl" />
       <div className="min-w-0 flex-1">
         <p className="truncate font-bold">{item.name}</p>
         <p className="text-xs text-muted-foreground">

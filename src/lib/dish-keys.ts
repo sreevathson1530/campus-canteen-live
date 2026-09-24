@@ -19,3 +19,7 @@ export const DISH_MODELS: { key: string; label: string }[] = [
 ];
 
 export const stillFor = (key: string | null | undefined) => (key ? `/stills/${key}.webp` : null);
+
+/** Keys that have a real, freely licensed photo in public/photos (credits in photo-credits.ts). */
+const PHOTO_KEYS = new Set(DISH_MODELS.map((m) => m.key));
+export const photoFor = (key: string | null | undefined) => (key && PHOTO_KEYS.has(key) ? `/photos/${key}.webp` : null);

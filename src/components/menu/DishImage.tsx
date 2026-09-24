@@ -11,37 +11,52 @@ function tileColor(name: string): string {
   return TILE_COLORS[h % TILE_COLORS.length];
 }
 
-/** 3D-rendered still of the dish; falls back to a coloured tile with the item's initial. */
+/**
+ * Dish picture with a fallback chain: the real photo (full-bleed), then the rendered 3D still
+ * (contained on a soft backdrop), then a coloured tile with the item's initial.
+ */
 export function DishImage({
   name,
   src,
+  still,
   className,
   priority = false,
 }: {
   name: string;
+  /** Real photo (menu item imageUrl). */
   src: string | null;
+  /** Rendered 3D still, used when there is no photo or it fails to load. */
+  still?: string | null;
   className?: string;
   priority?: boolean;
 }) {
-  const [failed, setFailed] = useState(false);
-  const showImg = !!src && !failed;
+  const [failed, setFailed] = useState<Set<string>>(() => new Set());
+  const candidates = [src, still].filter((u): u is string => !!u && !failed.has(u));
+  const current = candidates[0] ?? null;
+  const isPhoto = current !== null && current === src;
+
   return (
     <div
       className={cn(
         "relative grid place-items-center overflow-hidden",
-        "bg-[radial-gradient(circle_at_50%_42%,#ffffff_0%,#f3ecdd_62%,#e7dcc6_100%)] dark:bg-[radial-gradient(circle_at_50%_42%,#2e2a24_0%,#1f1c18_70%)]",
+        !isPhoto &&
+          "bg-[radial-gradient(circle_at_50%_42%,#ffffff_0%,#f3ecdd_62%,#e7dcc6_100%)] dark:bg-[radial-gradient(circle_at_50%_42%,#2e2a24_0%,#1f1c18_70%)]",
         className,
       )}
     >
-      {showImg ? (
-        // eslint-disable-next-line @next/next/no-img-element -- small static WebP stills; next/image adds no value here
+      {current ? (
+        // eslint-disable-next-line @next/next/no-img-element -- small static WebP files; next/image adds no value here
         <img
-          src={src}
+          key={current}
+          src={current}
           alt=""
           loading={priority ? "eager" : "lazy"}
           decoding="async"
-          onError={() => setFailed(true)}
-          className="size-full object-contain p-1 drop-shadow-[0_8px_10px_rgba(0,0,0,.18)]"
+          onError={() => setFailed((f) => new Set(f).add(current))}
+          className={cn(
+            "size-full",
+            isPhoto ? "object-cover" : "object-contain p-1 drop-shadow-[0_8px_10px_rgba(0,0,0,.18)]",
+          )}
         />
       ) : (
         <span

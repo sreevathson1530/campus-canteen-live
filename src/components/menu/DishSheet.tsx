@@ -1,19 +1,24 @@
 import dynamic from "next/dynamic";
-import { Clock } from "lucide-react";
+import { useState } from "react";
+import { Camera, Clock, Rotate3d } from "lucide-react";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import type { MenuItemDTO } from "@/lib/realtime/events";
 import { formatRupees } from "@/lib/money";
+import { stillFor } from "@/lib/dish-keys";
+import { cn } from "@/lib/utils";
 import { DishImage } from "./DishImage";
 import { isSoldOut } from "./DishCard";
 import { QtyStepper } from "./QtyStepper";
 import { VegMark } from "./VegMark";
 
-// The live 3D viewer (three.js) loads only when a dish is opened, never on the menu grid.
+// The live 3D viewer (three.js) loads only when the 3D view is chosen, never on the menu grid.
 const DishViewer = dynamic(() => import("@/components/food3d/DishViewer").then((m) => m.DishViewer), {
   ssr: false,
   loading: () => null,
 });
+
+type View = "photo" | "3d";
 
 export function DishSheet({
   item,
@@ -30,15 +35,62 @@ export function DishSheet({
   onQty: (q: number) => void;
   canOrder: boolean;
 }) {
+  const [view, setView] = useState<View>("photo");
   const soldOut = item ? isSoldOut(item) : false;
+  const has3d = !!item?.modelKey;
+  const hasPhoto = !!item?.imageUrl;
+  const shown: View = !hasPhoto && has3d ? "3d" : view;
+
   return (
-    <Drawer open={!!item} onOpenChange={(o) => !o && onClose()}>
+    <Drawer
+      open={!!item}
+      onOpenChange={(o) => {
+        if (!o) {
+          onClose();
+          setView("photo");
+        }
+      }}
+    >
       <DrawerContent className="mx-auto max-h-[94dvh] max-w-lg rounded-t-[1.75rem]">
         {item && (
           <>
-            <div className="relative mx-4 mt-2 aspect-square max-h-[46dvh] overflow-hidden rounded-3xl">
-              <DishImage name={item.name} src={item.imageUrl} priority className="absolute inset-0" />
-              {item.modelKey && <DishViewer modelKey={item.modelKey} className="absolute inset-0" />}
+            <div className="relative mx-4 mt-2 aspect-[5/4] max-h-[44dvh] overflow-hidden rounded-3xl">
+              {shown === "photo" ? (
+                <DishImage name={item.name} src={item.imageUrl} still={stillFor(item.modelKey)} priority className="absolute inset-0" />
+              ) : (
+                <>
+                  <DishImage name={item.name} src={null} still={stillFor(item.modelKey)} priority className="absolute inset-0" />
+                  <DishViewer modelKey={item.modelKey!} className="absolute inset-0" />
+                </>
+              )}
+              {has3d && hasPhoto && (
+                <div
+                  role="radiogroup"
+                  aria-label="View"
+                  className="absolute top-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-background/85 p-1 shadow-sm backdrop-blur"
+                >
+                  {(
+                    [
+                      ["photo", "Photo", Camera],
+                      ["3d", "3D", Rotate3d],
+                    ] as const
+                  ).map(([v, label, Icon]) => (
+                    <button
+                      key={v}
+                      type="button"
+                      role="radio"
+                      aria-checked={shown === v}
+                      onClick={() => setView(v)}
+                      className={cn(
+                        "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors",
+                        shown === v ? "bg-foreground text-background" : "text-muted-foreground",
+                      )}
+                    >
+                      <Icon className="size-3.5" /> {label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <DrawerHeader className="pb-1 text-left">
               <div className="flex items-start justify-between gap-3">

@@ -72,7 +72,7 @@ async function main() {
         isVeg,
         stock,
         modelKey,
-        imageUrl: `/stills/${modelKey}.webp`,
+        imageUrl: `/photos/${modelKey}.webp`, // real photo; the 3D still is derived from modelKey
         prepMinutes,
         sortOrder: sort++,
         categoryId: category.id,

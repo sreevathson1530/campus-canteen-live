@@ -1,8 +1,9 @@
-import { ContactShadows, Environment, Float, Lightformer } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { getDish } from "./dishes";
+import { Plate, PLATE_TOP } from "./plates";
 
 type Vec3 = [number, number, number];
 
@@ -58,26 +59,20 @@ function Steam({ at }: { at: Vec3 }) {
   );
 }
 
-/** One dish on its contact shadow. `animated` adds float and steam (off for stills and reduced motion). */
+/** One dish served on its plate, grounded on a soft contact shadow. `animated` adds steam (off for stills and reduced motion). */
 export function DishStage({ modelKey, animated }: { modelKey: string | null; animated: boolean }) {
-  const { Model, hot, steamAt } = getDish(modelKey);
-  const dish = (
-    <group position={[0, 0.08, 0]}>
-      <Model />
-      {animated && hot && <Steam at={steamAt} />}
-    </group>
-  );
+  const { Model, hot, steamAt, plate } = getDish(modelKey);
+  const lift = PLATE_TOP[plate];
   return (
     <>
       <StudioLights />
-      {animated ? (
-        <Float speed={1.6} rotationIntensity={0.15} floatIntensity={0.35} floatingRange={[0, 0.08]}>
-          {dish}
-        </Float>
-      ) : (
-        dish
-      )}
-      <ContactShadows position={[0, 0, 0]} opacity={0.42} scale={3.4} blur={2.6} far={1.6} resolution={512} color="#3b2a16" />
+      <Plate kind={plate} />
+      {/* Food is scaled to leave a visible rim of plate (or leaf) around it. */}
+      <group position={[0, lift, 0]} scale={plate === "none" ? 1 : plate === "oval" ? 0.86 : 0.82}>
+        <Model />
+        {animated && hot && <Steam at={steamAt} />}
+      </group>
+      <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={4} blur={2.2} far={1.4} resolution={512} color="#3b2a16" />
     </>
   );
 }

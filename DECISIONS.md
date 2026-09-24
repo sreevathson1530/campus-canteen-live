@@ -9,12 +9,13 @@ One line of reasoning per choice the PRD left open, or per approved change to it
 - **OTP before every order.** Anyone could otherwise order for fun; a fresh 4-digit SMS code is required per order and each phone number belongs to one account.
 - **Free SMS via an Android phone** (SMS Gateway for Android, local mode) behind a swappable `SmsSender`; `console` prints codes during development. The owner chose "completely free" over paid providers.
 - **Bill on collection.** A `Bill` + `BillLine` snapshot is created inside the READY→COLLECTED transaction with name, mobile, dishes, rates, total and times; no payment method and no GST, as requested.
-- **3D food, hybrid.** WebP stills on the grid (4G budget) and a lazily loaded live Three.js viewer on tap; stylised procedural models, no plates.
+- **Real food photos** on cards, cart and dish sheet, from Wikimedia Commons under CC licences, credited on a public `/credits` page (CC BY-SA requires attribution). Google Images results were not used because most are copyrighted. `MenuItem.imageUrl` holds the photo, so no schema change was needed; the 3D still is derived from `modelKey`.
+- **3D food on tableware.** A Photo | 3D toggle in the dish sheet; models sit on a steel plate, a banana leaf on a steel plate, or an oval plate (dosa), with katoris for meals. Food is scaled to leave a visible rim and no longer floats (the owner found floating food unappetising).
 
 ## OTP details
 
 - Codes and tokens are stored as HMAC-SHA256 with `JWT_SECRET` as the key, so a database leak doesn't reveal usable codes.
-- Code valid 5 min; 5 wrong attempts lock it; 30 s resend cooldown; max 5 codes/hour per phone and 10/hour per IP. These are the smallest limits that still allow a real retry, and they keep the ~100 SMS/day gateway budget safe.
+- Code valid 5 min; 5 wrong attempts lock it; 30 s resend cooldown; max 5 codes/hour per phone (the real guard) and 60/hour per IP (`OTP_IP_HOURLY_LIMIT`), since on campus Wi-Fi many students share one public IP; a 10/hour IP cap locked everyone out during testing.
 - A verified code yields a single-use token valid 10 min; `placeOrder` consumes it with a conditional `updateMany` inside the order transaction, so a failed order (e.g. out of stock) leaves the token usable.
 - The Idempotency-Key is checked before the OTP token, and re-checked if the transaction fails, so a double tap returns the first order rather than "code already used".
 - If an SMS send fails, the challenge is deleted so it doesn't count against the cooldown or hourly limit.
@@ -25,7 +26,7 @@ One line of reasoning per choice the PRD left open, or per approved change to it
 
 - `User.phone` is nullable in the schema but required by the student registration validator; staff/admin don't need one.
 - Phones are normalised to `+91XXXXXXXXXX` and must be 10 digits starting 6-9 (Indian mobile ranges).
-- `MenuItem.modelKey` picks the procedural 3D model; `imageUrl` holds its rendered still (`/stills/<key>.webp`).
+- `MenuItem.modelKey` picks the procedural 3D model (still at `/stills/<key>.webp`); `imageUrl` holds the real photo. The picture fallback chain is photo → 3D still → coloured initial tile.
 - `OrderDTO.billNumber` was added so the live `order:updated` event can show "View bill" instantly.
 - Bill number is `CCL-YYYYMMDD-<token>`: unique because (business date, token) is unique, and readable at the counter.
 - The body field is `otpToken` (not a header), keeping `Idempotency-Key` as the only custom header.

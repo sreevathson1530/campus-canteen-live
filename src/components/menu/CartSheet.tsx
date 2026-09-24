@@ -15,6 +15,7 @@ import { DishImage } from "./DishImage";
 import { isSoldOut } from "./DishCard";
 import { OtpStep } from "./OtpStep";
 import { QtyStepper } from "./QtyStepper";
+import { stillFor } from "@/lib/dish-keys";
 
 export interface CartRow {
   menuItemId: string;
@@ -125,7 +126,7 @@ export function CartSheet({
               {rows.length === 0 && <p className="py-8 text-center text-muted-foreground">Your cart is empty.</p>}
               {rows.map((r) => (
                 <div key={r.menuItemId} className="flex items-center gap-3 rounded-2xl border bg-card p-2.5">
-                  <DishImage name={r.item?.name ?? "?"} src={r.item?.imageUrl ?? null} className="size-16 shrink-0 rounded-xl" />
+                  <DishImage name={r.item?.name ?? "?"} src={r.item?.imageUrl ?? null} still={stillFor(r.item?.modelKey)} className="size-16 shrink-0 rounded-xl" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{r.item?.name ?? "Removed item"}</p>
                     {r.unavailable ? (

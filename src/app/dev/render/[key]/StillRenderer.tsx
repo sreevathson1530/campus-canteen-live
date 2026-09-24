@@ -15,9 +15,9 @@ export function StillRenderer({ modelKey }: { modelKey: string }) {
     <div id="still" style={{ width: 640, height: 512, background: "transparent" }}>
       <Canvas
         dpr={1}
-        camera={{ position: [0, 1.7, 2.75], fov: 34 }}
+        camera={{ position: [0, 2.15, 3.3], fov: 34 }}
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
-        onCreated={({ camera }) => camera.lookAt(0, 0.3, 0)}
+        onCreated={({ camera }) => camera.lookAt(0, 0.22, 0)}
       >
         <Suspense fallback={null}>
           <DishStage modelKey={modelKey} animated={false} />

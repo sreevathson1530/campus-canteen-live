@@ -48,7 +48,7 @@ export function DishViewer({ modelKey, className }: { modelKey: string; classNam
     >
       <Canvas
         dpr={[1, 1.75]}
-        camera={{ position: [0, 1.75, 3.35], fov: 34, near: 0.1, far: 50 }}
+        camera={{ position: [0, 2.1, 3.6], fov: 34, near: 0.1, far: 50 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         frameloop={reduced ? "demand" : "always"}
         onCreated={({ gl }) => {
@@ -62,7 +62,7 @@ export function DishViewer({ modelKey, className }: { modelKey: string; classNam
           <DishStage modelKey={modelKey} animated={!reduced} />
         </Suspense>
         <OrbitControls
-          target={[0, 0.38, 0]}
+          target={[0, 0.3, 0]}
           enablePan={false}
           minDistance={1.8}
           maxDistance={4.6}

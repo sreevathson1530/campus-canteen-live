@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ClientApiError } from "@/lib/client-api";
-import { DISH_MODELS, stillFor } from "@/lib/dish-keys";
+import { DISH_MODELS, photoFor, stillFor } from "@/lib/dish-keys";
 import { formatRupees } from "@/lib/money";
 import type { MenuItemDTO } from "@/lib/realtime/events";
 import { DishImage } from "@/components/menu/DishImage";
@@ -36,6 +36,7 @@ interface Draft {
   isVeg: boolean;
   categoryId: string;
   modelKey: string;
+  photoUrl: string;
   prepMinutes: string;
   stock: string;
   isAvailable: boolean;
@@ -51,17 +52,35 @@ function toDraft(i: Item | null, categoryId: string): Draft {
         isVeg: i.isVeg,
         categoryId: i.categoryId,
         modelKey: i.modelKey ?? "",
+        photoUrl: i.imageUrl ?? "",
         prepMinutes: String(i.prepMinutes),
         stock: i.stock === null ? "" : String(i.stock),
         isAvailable: i.isAvailable,
       }
-    : { name: "", description: "", rupees: "", isVeg: true, categoryId, modelKey: "", prepMinutes: "5", stock: "", isAvailable: true };
+    : {
+        name: "",
+        description: "",
+        rupees: "",
+        isVeg: true,
+        categoryId,
+        modelKey: "",
+        photoUrl: "",
+        prepMinutes: "5",
+        stock: "",
+        isAvailable: true,
+      };
 }
 
 export function MenuAdmin() {
   const qc = useQueryClient();
-  const cats = useQuery({ queryKey: CATS_KEY, queryFn: () => api<{ categories: Category[] }>("/api/admin/categories").then((r) => r.categories) });
-  const items = useQuery({ queryKey: ITEMS_KEY, queryFn: () => api<{ items: Item[] }>("/api/admin/items").then((r) => r.items) });
+  const cats = useQuery({
+    queryKey: CATS_KEY,
+    queryFn: () => api<{ categories: Category[] }>("/api/admin/categories").then((r) => r.categories),
+  });
+  const items = useQuery({
+    queryKey: ITEMS_KEY,
+    queryFn: () => api<{ items: Item[] }>("/api/admin/items").then((r) => r.items),
+  });
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [newCat, setNewCat] = useState("");
@@ -95,14 +114,17 @@ export function MenuAdmin() {
       isVeg: draft.isVeg,
       categoryId: draft.categoryId,
       modelKey: draft.modelKey || null,
-      imageUrl: stillFor(draft.modelKey),
+      imageUrl: draft.photoUrl.trim() || null,
       prepMinutes: Number(draft.prepMinutes) || 5,
       stock: draft.stock === "" ? null : Number(draft.stock),
       isAvailable: draft.isAvailable,
     };
     setSaving(true);
     await run(
-      () => (draft.id ? api(`/api/admin/items/${draft.id}`, { method: "PATCH", body }) : api("/api/admin/items", { body })),
+      () =>
+        draft.id
+          ? api(`/api/admin/items/${draft.id}`, { method: "PATCH", body })
+          : api("/api/admin/items", { body }),
       draft.id ? "Item updated, live on every menu" : "Item added",
     );
     setSaving(false);
@@ -134,7 +156,11 @@ export function MenuAdmin() {
     <div className="grid gap-6 pb-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl font-extrabold">Menu</h1>
-        <Button size="xl" onClick={() => setDraft(toDraft(null, categories[0]?.id ?? ""))} disabled={!categories.length}>
+        <Button
+          size="xl"
+          onClick={() => setDraft(toDraft(null, categories[0]?.id ?? ""))}
+          disabled={!categories.length}
+        >
           <Plus /> Add item
         </Button>
       </div>
@@ -144,11 +170,25 @@ export function MenuAdmin() {
         onSubmit={(e) => {
           e.preventDefault();
           if (newCat.trim().length < 2) return;
-          void run(() => api("/api/admin/categories", { body: { name: newCat.trim() } }), "Category added").then(() => setNewCat(""));
+          void run(
+            () => api("/api/admin/categories", { body: { name: newCat.trim() } }),
+            "Category added",
+          ).then(() => setNewCat(""));
         }}
       >
-        <Input value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder="New category name" className="h-11 rounded-xl" aria-label="New category name" />
-        <Button type="submit" variant="outline" className="h-11 rounded-xl px-4" disabled={newCat.trim().length < 2}>
+        <Input
+          value={newCat}
+          onChange={(e) => setNewCat(e.target.value)}
+          placeholder="New category name"
+          className="h-11 rounded-xl"
+          aria-label="New category name"
+        />
+        <Button
+          type="submit"
+          variant="outline"
+          className="h-11 rounded-xl px-4"
+          disabled={newCat.trim().length < 2}
+        >
           Add category
         </Button>
       </form>
@@ -159,7 +199,13 @@ export function MenuAdmin() {
           <section key={c.id} className="grid gap-2">
             <div className="flex items-center gap-1">
               <h2 className="mr-auto font-display text-xl font-extrabold">{c.name}</h2>
-              <Button variant="ghost" size="icon-lg" aria-label={`Move ${c.name} up`} onClick={() => move(categories, ci, -1, "/api/admin/categories/reorder")} disabled={ci === 0}>
+              <Button
+                variant="ghost"
+                size="icon-lg"
+                aria-label={`Move ${c.name} up`}
+                onClick={() => move(categories, ci, -1, "/api/admin/categories/reorder")}
+                disabled={ci === 0}
+              >
                 <ArrowUp />
               </Button>
               <Button
@@ -177,23 +223,46 @@ export function MenuAdmin() {
                 aria-label={`Rename ${c.name}`}
                 onClick={() => {
                   const name = window.prompt("Rename category", c.name);
-                  if (name && name.trim().length >= 2) void run(() => api(`/api/admin/categories/${c.id}`, { method: "PATCH", body: { name: name.trim() } }));
+                  if (name && name.trim().length >= 2)
+                    void run(() =>
+                      api(`/api/admin/categories/${c.id}`, { method: "PATCH", body: { name: name.trim() } }),
+                    );
                 }}
               >
                 <Pencil />
               </Button>
               {c.itemCount === 0 && (
-                <Button variant="ghost" size="icon-lg" aria-label={`Delete ${c.name}`} onClick={() => run(() => api(`/api/admin/categories/${c.id}`, { method: "DELETE" }), "Category deleted")}>
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  aria-label={`Delete ${c.name}`}
+                  onClick={() =>
+                    run(() => api(`/api/admin/categories/${c.id}`, { method: "DELETE" }), "Category deleted")
+                  }
+                >
                   <Trash2 />
                 </Button>
               )}
             </div>
-            {list.length === 0 && <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">No items yet.</p>}
+            {list.length === 0 && (
+              <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
+                No items yet.
+              </p>
+            )}
             <ul className="grid gap-2">
               {list.map((i, ii) => (
                 <li key={i.id} className="flex items-center gap-3 rounded-2xl border bg-card p-2.5">
-                  <DishImage name={i.name} src={i.imageUrl} className="size-14 shrink-0 rounded-xl" />
-                  <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setDraft(toDraft(i, c.id))}>
+                  <DishImage
+                    name={i.name}
+                    src={i.imageUrl}
+                    still={stillFor(i.modelKey)}
+                    className="size-14 shrink-0 rounded-xl"
+                  />
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() => setDraft(toDraft(i, c.id))}
+                  >
                     <span className="flex items-center gap-1.5 font-bold">
                       <VegMark isVeg={i.isVeg} /> <span className="truncate">{i.name}</span>
                     </span>
@@ -203,10 +272,22 @@ export function MenuAdmin() {
                     </span>
                   </button>
                   <div className="flex">
-                    <Button variant="ghost" size="icon-lg" aria-label={`Move ${i.name} up`} disabled={ii === 0} onClick={() => move(list, ii, -1, "/api/admin/items/reorder")}>
+                    <Button
+                      variant="ghost"
+                      size="icon-lg"
+                      aria-label={`Move ${i.name} up`}
+                      disabled={ii === 0}
+                      onClick={() => move(list, ii, -1, "/api/admin/items/reorder")}
+                    >
                       <ArrowUp />
                     </Button>
-                    <Button variant="ghost" size="icon-lg" aria-label={`Move ${i.name} down`} disabled={ii === list.length - 1} onClick={() => move(list, ii, 1, "/api/admin/items/reorder")}>
+                    <Button
+                      variant="ghost"
+                      size="icon-lg"
+                      aria-label={`Move ${i.name} down`}
+                      disabled={ii === list.length - 1}
+                      onClick={() => move(list, ii, 1, "/api/admin/items/reorder")}
+                    >
                       <ArrowDown />
                     </Button>
                   </div>
@@ -220,31 +301,61 @@ export function MenuAdmin() {
       <Drawer open={!!draft} onOpenChange={(o) => !o && setDraft(null)}>
         <DrawerContent className="mx-auto max-h-[94dvh] max-w-lg">
           <DrawerHeader className="text-left">
-            <DrawerTitle className="font-display text-2xl font-extrabold">{draft?.id ? "Edit item" : "New item"}</DrawerTitle>
+            <DrawerTitle className="font-display text-2xl font-extrabold">
+              {draft?.id ? "Edit item" : "New item"}
+            </DrawerTitle>
             <DrawerDescription>Changes appear live on every open menu.</DrawerDescription>
           </DrawerHeader>
           {draft && (
             <div className="grid gap-4 overflow-y-auto px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
               <div className="grid gap-1.5">
                 <Label htmlFor="it-name">Name</Label>
-                <Input id="it-name" className="h-11 rounded-xl" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+                <Input
+                  id="it-name"
+                  className="h-11 rounded-xl"
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                />
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="it-desc">Description</Label>
-                <Textarea id="it-desc" className="rounded-xl" maxLength={200} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+                <Textarea
+                  id="it-desc"
+                  className="rounded-xl"
+                  maxLength={200}
+                  value={draft.description}
+                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
                   <Label htmlFor="it-price">Price (₹)</Label>
-                  <Input id="it-price" inputMode="decimal" className="h-11 rounded-xl" value={draft.rupees} onChange={(e) => setDraft({ ...draft, rupees: e.target.value.replace(/[^\d.]/g, "") })} />
+                  <Input
+                    id="it-price"
+                    inputMode="decimal"
+                    className="h-11 rounded-xl"
+                    value={draft.rupees}
+                    onChange={(e) => setDraft({ ...draft, rupees: e.target.value.replace(/[^\d.]/g, "") })}
+                  />
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="it-prep">Prep minutes</Label>
-                  <Input id="it-prep" inputMode="numeric" className="h-11 rounded-xl" value={draft.prepMinutes} onChange={(e) => setDraft({ ...draft, prepMinutes: e.target.value.replace(/\D/g, "") })} />
+                  <Input
+                    id="it-prep"
+                    inputMode="numeric"
+                    className="h-11 rounded-xl"
+                    value={draft.prepMinutes}
+                    onChange={(e) => setDraft({ ...draft, prepMinutes: e.target.value.replace(/\D/g, "") })}
+                  />
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="it-cat">Category</Label>
-                  <select id="it-cat" className={selectCls} value={draft.categoryId} onChange={(e) => setDraft({ ...draft, categoryId: e.target.value })}>
+                  <select
+                    id="it-cat"
+                    className={selectCls}
+                    value={draft.categoryId}
+                    onChange={(e) => setDraft({ ...draft, categoryId: e.target.value })}
+                  >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -254,14 +365,40 @@ export function MenuAdmin() {
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="it-stock">Stock (blank = unlimited)</Label>
-                  <Input id="it-stock" inputMode="numeric" className="h-11 rounded-xl" value={draft.stock} onChange={(e) => setDraft({ ...draft, stock: e.target.value.replace(/\D/g, "") })} />
+                  <Input
+                    id="it-stock"
+                    inputMode="numeric"
+                    className="h-11 rounded-xl"
+                    value={draft.stock}
+                    onChange={(e) => setDraft({ ...draft, stock: e.target.value.replace(/\D/g, "") })}
+                  />
                 </div>
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="it-model">3D model</Label>
                 <div className="flex items-center gap-3">
-                  <DishImage name={draft.name || "?"} src={stillFor(draft.modelKey)} className="size-14 shrink-0 rounded-xl" />
-                  <select id="it-model" className={selectCls} value={draft.modelKey} onChange={(e) => setDraft({ ...draft, modelKey: e.target.value })}>
+                  <DishImage
+                    key={`${draft.photoUrl}|${draft.modelKey}`}
+                    name={draft.name || "?"}
+                    src={draft.photoUrl || null}
+                    still={stillFor(draft.modelKey)}
+                    className="size-14 shrink-0 rounded-xl"
+                  />
+                  <select
+                    id="it-model"
+                    className={selectCls}
+                    value={draft.modelKey}
+                    onChange={(e) => {
+                      const modelKey = e.target.value;
+                      // Pre-fill the matching library photo unless a custom photo URL was entered.
+                      const auto = !draft.photoUrl || draft.photoUrl === photoFor(draft.modelKey);
+                      setDraft({
+                        ...draft,
+                        modelKey,
+                        photoUrl: auto ? (photoFor(modelKey) ?? "") : draft.photoUrl,
+                      });
+                    }}
+                  >
                     <option value="">No model (initial tile)</option>
                     {DISH_MODELS.map((m) => (
                       <option key={m.key} value={m.key}>
@@ -271,12 +408,30 @@ export function MenuAdmin() {
                   </select>
                 </div>
               </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="it-photo">Photo URL</Label>
+                <Input
+                  id="it-photo"
+                  className="h-11 rounded-xl"
+                  placeholder="/photos/idli.webp or https://…"
+                  value={draft.photoUrl}
+                  onChange={(e) => setDraft({ ...draft, photoUrl: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Use photos you&apos;re allowed to use, and credit them on the Credits page.
+                </p>
+              </div>
               <div className="flex flex-wrap gap-6">
                 <label className="flex items-center gap-2 text-sm font-semibold">
-                  <Switch checked={draft.isVeg} onCheckedChange={(v) => setDraft({ ...draft, isVeg: v })} /> Vegetarian
+                  <Switch checked={draft.isVeg} onCheckedChange={(v) => setDraft({ ...draft, isVeg: v })} />{" "}
+                  Vegetarian
                 </label>
                 <label className="flex items-center gap-2 text-sm font-semibold">
-                  <Switch checked={draft.isAvailable} onCheckedChange={(v) => setDraft({ ...draft, isAvailable: v })} /> Available
+                  <Switch
+                    checked={draft.isAvailable}
+                    onCheckedChange={(v) => setDraft({ ...draft, isAvailable: v })}
+                  />{" "}
+                  Available
                 </label>
               </div>
               <Button size="xl" onClick={saveDraft} disabled={saving}>
@@ -289,7 +444,10 @@ export function MenuAdmin() {
                   onClick={() => {
                     const id = draft.id!;
                     setDraft(null);
-                    void run(() => api(`/api/admin/items/${id}`, { method: "DELETE" }), "Archived. Hidden from the menu, kept in order history.");
+                    void run(
+                      () => api(`/api/admin/items/${id}`, { method: "DELETE" }),
+                      "Archived. Hidden from the menu, kept in order history.",
+                    );
                   }}
                 >
                   <Archive /> Archive item

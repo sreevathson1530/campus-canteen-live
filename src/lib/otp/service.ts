@@ -9,7 +9,11 @@ export const TOKEN_TTL_MS = 10 * 60_000;
 export const RESEND_COOLDOWN_MS = 30_000;
 export const MAX_ATTEMPTS = 5;
 export const MAX_SENDS_PER_HOUR_PER_PHONE = 5;
-export const MAX_SENDS_PER_HOUR_PER_IP = 10;
+/**
+ * A safety net, not the main guard (that's the per-phone limit): on campus Wi-Fi many students
+ * share one public IP, so this must be generous. Override with OTP_IP_HOURLY_LIMIT.
+ */
+export const maxSendsPerHourPerIp = () => Number(process.env.OTP_IP_HOURLY_LIMIT) || 60;
 
 /** Codes and tokens are stored only as keyed hashes. */
 function digest(kind: "code" | "token", value: string): string {
@@ -51,7 +55,7 @@ export async function sendOtp(userId: string, ip: string): Promise<SendResult> {
   }
   const sentThisHour = await prisma.otpChallenge.count({ where: { phone, createdAt: { gt: new Date(now - 3_600_000) } } });
   if (sentThisHour >= MAX_SENDS_PER_HOUR_PER_PHONE) apiError("RATE_LIMITED", "Too many codes for this number. Try again later.");
-  if (!rateLimit(`otp-ip:${ip}`, MAX_SENDS_PER_HOUR_PER_IP, 3_600_000)) apiError("RATE_LIMITED", "Too many codes requested. Try again later.");
+  if (!rateLimit(`otp-ip:${ip}`, maxSendsPerHourPerIp(), 3_600_000)) apiError("RATE_LIMITED", "Too many codes requested. Try again later.");
 
   const code = String(randomInt(0, 10_000)).padStart(4, "0");
   const challenge = await prisma.otpChallenge.create({

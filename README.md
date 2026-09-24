@@ -99,12 +99,20 @@ registers extra "Demo Student" accounts when needed. With `--kitchen` it also mo
 PREPARING (5-15 s), READY (+10-20 s) and COLLECTED (+20 s, creating the bill). It uses only the
 public HTTP API.
 
-## 3D food
+## Food photos and 3D food
 
-Every dish is a stylised procedural Three.js model (no plates, no model files to download) in
-`src/components/food3d/`. The menu grid shows small WebP stills (~20 KB each) so it loads fast on
-4G; tapping a dish lazy-loads the live viewer (drag to spin, pinch to zoom, steam on hot food).
-Without WebGL, or with reduced motion, the still stays.
+**Photos.** Menu cards, the cart and the dish sheet show real food photos from
+**Wikimedia Commons**, used under their Creative Commons licences (mostly CC BY-SA). Each photo's
+author and licence is listed on the public **`/credits`** page, linked from the login page and
+the bottom of the menu. That credit is what the licence requires, so keep it if you change photos.
+The files live in `public/photos/` (800×640 WebP, 20-90 KB) and the credits in
+`src/lib/photo-credits.ts`. Images copied from Google search results are usually copyrighted and
+were deliberately not used.
+
+**3D.** The dish sheet has a **Photo | 3D** toggle. Every dish is a stylised procedural Three.js
+model served on a **steel plate**, a **banana leaf** or with **katoris** (no model files to
+download) in `src/components/food3d/`. The live viewer loads only when 3D is chosen (drag to spin,
+pinch to zoom, steam on hot food). Without WebGL, or with reduced motion, a rendered still is shown.
 
 After changing a model, regenerate the stills with the dev server running:
 

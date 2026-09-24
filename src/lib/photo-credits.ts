@@ -1,0 +1,158 @@
+// Food photos are from Wikimedia Commons under the licences below (CC BY-SA requires this credit).
+// Shown on the public /credits page. Photos were cropped to 5:4 and re-encoded as WebP.
+export interface PhotoCredit {
+  key: string;
+  dish: string;
+  file: string;
+  author: string;
+  license: string;
+  licenseUrl: string;
+  source: string;
+}
+
+export const PHOTO_CREDITS: PhotoCredit[] = [
+  {
+    key: "idli",
+    dish: "Idli",
+    file: "Idli Sambar-Noida-UP-SP004.jpg",
+    author: "Sutapa Pal",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Idli_Sambar-Noida-UP-SP004.jpg",
+  },
+  {
+    key: "masala-dosa",
+    dish: "Masala Dosa",
+    file: "Masala dosa 01.jpg",
+    author: "Marajozkee",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Masala_dosa_01.jpg",
+  },
+  {
+    key: "pongal",
+    dish: "Pongal",
+    file: "Ven pongal with sambar and chutney.jpg",
+    author: "Shafana jasmine",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Ven_pongal_with_sambar_and_chutney.jpg",
+  },
+  {
+    key: "poori",
+    dish: "Poori",
+    file: "Poori - Bhaji Potato Bhaji (15727506678).jpg",
+    author: "Yummy O Yummy",
+    license: "CC BY 2.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/2.0",
+    source: "https://commons.wikimedia.org/wiki/File:Poori_-_Bhaji_Potato_Bhaji_(15727506678).jpg",
+  },
+  {
+    key: "veg-meals",
+    dish: "Veg Meals",
+    file: "South indian meals 24.jpg",
+    author: "Swathi sri srinivasa raghavan",
+    license: "CC0",
+    licenseUrl: "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    source: "https://commons.wikimedia.org/wiki/File:South_indian_meals_24.jpg",
+  },
+  {
+    key: "curd-rice",
+    dish: "Curd Rice",
+    file: "Curd Rice.jpg",
+    author: "Sudharshan Shanmugasundaram",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Curd_Rice.jpg",
+  },
+  {
+    key: "lemon-rice",
+    dish: "Lemon Rice",
+    file: "Lemon Rice in Kerala.jpg",
+    author: "Ganesh Gore",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Lemon_Rice_in_Kerala.jpg",
+  },
+  {
+    key: "biryani",
+    dish: "Chicken Biryani",
+    file: "Shrimp Biriyani.JPG",
+    author: "Jyothis",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0",
+    source: "https://commons.wikimedia.org/wiki/File:Shrimp_Biriyani.JPG",
+  },
+  {
+    key: "egg-fried-rice",
+    dish: "Egg Fried Rice",
+    file: "Fried rice with chicken and egg.jpg",
+    author: "daSupremo",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Fried_rice_with_chicken_and_egg.jpg",
+  },
+  {
+    key: "samosa",
+    dish: "Samosa",
+    file: "Samosa with chutney.jpg",
+    author: "Priyam1307",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Samosa_with_chutney.jpg",
+  },
+  {
+    key: "veg-puff",
+    dish: "Veg Puff",
+    file: "Sweet Puff National Bakery Ooty Aug25 A7CR 07152.jpg",
+    author: "Timothy A. Gonsalves",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Sweet_Puff_National_Bakery_Ooty_Aug25_A7CR_07152.jpg",
+  },
+  {
+    key: "egg-puff",
+    dish: "Egg Puff",
+    file: "Egg Puffs.jpg",
+    author: "Gaurav Dhwaj Khadka",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Egg_Puffs.jpg",
+  },
+  {
+    key: "onion-bajji",
+    dish: "Onion Bajji",
+    file: "Bajji- Coimbatore- Tamil Nadu.jpg",
+    author: "Lohith Aswa M",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Bajji-_Coimbatore-_Tamil_Nadu.jpg",
+  },
+  {
+    key: "filter-coffee",
+    dish: "Filter Coffee",
+    file: "Indiancoffee.jpg",
+    author: "Commonsenses",
+    license: "CC BY-SA 3.0",
+    licenseUrl: "http://creativecommons.org/licenses/by-sa/3.0/",
+    source: "https://commons.wikimedia.org/wiki/File:Indiancoffee.jpg",
+  },
+  {
+    key: "tea",
+    dish: "Tea",
+    file: "Chai (Tea) 2.jpg",
+    author: "Gannu03",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Chai_(Tea)_2.jpg",
+  },
+  {
+    key: "lime-juice",
+    dish: "Fresh Lime Juice",
+    file: "Fresh Lime.JPG",
+    author: "Siddhantsahni28",
+    license: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Fresh_Lime.JPG",
+  },
+];

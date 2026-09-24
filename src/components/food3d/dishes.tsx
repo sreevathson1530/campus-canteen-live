@@ -1,9 +1,10 @@
-// Stylised, plate-free 3D models of every seeded dish, built from primitives in code.
+// Stylised 3D models of every seeded dish, built from primitives in code and served on steel plates or banana leaf.
 import type {} from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import { useMemo } from "react";
 import * as THREE from "three";
 import { Leaf, Mound, Scatter, lumpyGeometry, speckleTexture } from "./kit";
+import { Katori, type PlateKind } from "./plates";
 
 type Vec3 = [number, number, number];
 
@@ -58,7 +59,7 @@ function Lathe({ points, color, metal = false, opacity = 1, roughness = 0.3, pos
   return (
     <mesh geometry={geo} position={position} castShadow receiveShadow>
       {metal ? (
-        <meshStandardMaterial color={color} metalness={1} roughness={roughness} side={THREE.DoubleSide} />
+        <meshStandardMaterial color={color} metalness={0.72} roughness={roughness} side={THREE.DoubleSide} />
       ) : (
         <meshPhysicalMaterial
           color={color}
@@ -157,14 +158,15 @@ function VegMeals() {
         <Mound radius={0.6} height={0.42} color="#fbf7ee" seed={41} lumpiness={0.03} />
         <Scatter count={220} radius={0.58} height={0.42} color="#fffdf6" size={0.05} seed={42} roughness={0.5} />
       </group>
-      <Dollop position={[0.48, 0.05, 0.3]} color="#e7b33a" size={0.3} seed={43} />
-      <Dollop position={[0.35, 0.05, -0.38]} color="#fbfbf6" size={0.24} seed={44} />
+      <Katori position={[0.5, 0, 0.32]} liquid="#d9912f" />
+      <Katori position={[0.42, 0, -0.34]} liquid="#f8f6ee" radius={0.18} />
+      <Katori position={[-0.62, 0, 0.45]} liquid="#b8441f" radius={0.16} />
       <group position={[0.55, 0, -0.02]}>
         <Mound radius={0.2} height={0.14} color="#7aa84a" seed={45} lumpiness={0.15} />
         <Scatter count={18} radius={0.2} height={0.14} color="#f08a2c" size={0.05} seed={46} shape="cube" colors={["#f08a2c", "#f7e08a"]} />
       </group>
       {/* Papad leaning at the back */}
-      <mesh position={[-0.1, 0.5, -0.62]} rotation={[1.2, 0, 0.12]} castShadow>
+      <mesh position={[-0.05, 0.3, -0.72]} rotation={[1.32, 0, 0.1]} castShadow>
         <cylinderGeometry args={[0.55, 0.55, 0.02, 48]} />
         <meshStandardMaterial map={papad} roughness={0.8} />
       </mesh>
@@ -356,9 +358,9 @@ function FilterCoffee() {
       <Lathe
         position={[0, 0.08, 0]}
         points={[[0.0, 0.0], [0.3, 0.0], [0.33, 0.04], [0.37, 0.9], [0.4, 0.96], [0.38, 0.97], [0.35, 0.92], [0.31, 0.06], [0.0, 0.05]]}
-        color={STEEL}
+        color="#e8ebef"
         metal
-        roughness={0.22}
+        roughness={0.36}
       />
       <mesh position={[0, 0.98, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.345, 48]} />
@@ -424,23 +426,25 @@ function LimeJuice() {
 
 // ------------------------------------------------------------------ registry
 
-const DISHES: Record<string, { Model: () => React.JSX.Element; hot: boolean; steamAt: Vec3 }> = {
-  idli: { Model: Idli, hot: true, steamAt: [0, 0.5, 0] },
-  "masala-dosa": { Model: MasalaDosa, hot: true, steamAt: [0, 0.7, 0] },
-  pongal: { Model: Pongal, hot: true, steamAt: [0, 0.65, 0] },
-  poori: { Model: Poori, hot: true, steamAt: [0, 0.5, 0] },
-  "veg-meals": { Model: VegMeals, hot: true, steamAt: [-0.25, 0.5, 0] },
-  "curd-rice": { Model: CurdRice, hot: false, steamAt: [0, 0.6, 0] },
-  "lemon-rice": { Model: LemonRice, hot: true, steamAt: [0, 0.6, 0] },
-  biryani: { Model: Biryani, hot: true, steamAt: [0, 0.8, 0] },
-  "egg-fried-rice": { Model: EggFriedRice, hot: true, steamAt: [0, 0.6, 0] },
-  samosa: { Model: Samosas, hot: true, steamAt: [0, 0.9, 0] },
-  "veg-puff": { Model: () => <Puff />, hot: false, steamAt: [0, 0.5, 0] },
-  "egg-puff": { Model: () => <Puff egg />, hot: false, steamAt: [0, 0.5, 0] },
-  "onion-bajji": { Model: OnionBajji, hot: true, steamAt: [0, 0.6, 0] },
-  "filter-coffee": { Model: FilterCoffee, hot: true, steamAt: [0, 1.05, 0] },
-  tea: { Model: Tea, hot: true, steamAt: [0, 0.9, 0] },
-  "lime-juice": { Model: LimeJuice, hot: false, steamAt: [0, 1.3, 0] },
+type DishDef = { Model: () => React.JSX.Element; hot: boolean; steamAt: Vec3; plate: PlateKind };
+
+const DISHES: Record<string, DishDef> = {
+  idli: { Model: Idli, hot: true, steamAt: [0, 0.5, 0], plate: "leaf" },
+  "masala-dosa": { Model: MasalaDosa, hot: true, steamAt: [0, 0.7, 0], plate: "oval" },
+  pongal: { Model: Pongal, hot: true, steamAt: [0, 0.65, 0], plate: "steel" },
+  poori: { Model: Poori, hot: true, steamAt: [0, 0.5, 0], plate: "steel" },
+  "veg-meals": { Model: VegMeals, hot: true, steamAt: [-0.25, 0.5, 0], plate: "leaf" },
+  "curd-rice": { Model: CurdRice, hot: false, steamAt: [0, 0.6, 0], plate: "steel" },
+  "lemon-rice": { Model: LemonRice, hot: true, steamAt: [0, 0.6, 0], plate: "steel" },
+  biryani: { Model: Biryani, hot: true, steamAt: [0, 0.8, 0], plate: "leaf" },
+  "egg-fried-rice": { Model: EggFriedRice, hot: true, steamAt: [0, 0.6, 0], plate: "steel" },
+  samosa: { Model: Samosas, hot: true, steamAt: [0, 0.9, 0], plate: "small" },
+  "veg-puff": { Model: () => <Puff />, hot: false, steamAt: [0, 0.5, 0], plate: "small" },
+  "egg-puff": { Model: () => <Puff egg />, hot: false, steamAt: [0, 0.5, 0], plate: "small" },
+  "onion-bajji": { Model: OnionBajji, hot: true, steamAt: [0, 0.6, 0], plate: "small" },
+  "filter-coffee": { Model: FilterCoffee, hot: true, steamAt: [0, 1.05, 0], plate: "none" },
+  tea: { Model: Tea, hot: true, steamAt: [0, 0.9, 0], plate: "none" },
+  "lime-juice": { Model: LimeJuice, hot: false, steamAt: [0, 1.3, 0], plate: "none" },
 };
 
 export const DISH_KEYS = Object.keys(DISHES);
@@ -455,6 +459,6 @@ function Generic() {
   );
 }
 
-export function getDish(key: string | null | undefined) {
-  return (key && DISHES[key]) || { Model: Generic, hot: false, steamAt: [0, 0.5, 0] as Vec3 };
+export function getDish(key: string | null | undefined): DishDef {
+  return (key && DISHES[key]) || { Model: Generic, hot: false, steamAt: [0, 0.5, 0], plate: "steel" };
 }
