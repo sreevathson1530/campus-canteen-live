@@ -12,3 +12,6 @@ playwright-report
 coverage
 *.tmp.mjs
 .pg-test
+
+.vercel
+.env*
