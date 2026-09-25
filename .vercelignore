@@ -1,0 +1,13 @@
+.next
+node_modules
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+.pg-test
+test-results
+playwright-report
+*.tmp.mjs

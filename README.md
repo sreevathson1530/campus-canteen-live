@@ -87,6 +87,24 @@ Switching to a paid provider later is one new file in `src/lib/sms/`.
 
 ---
 
+## Live on Vercel
+
+**https://campus-canteen-live.vercel.app** (auto-deploys every push to `main`).
+
+- **Database:** Neon Postgres (free, Singapore), connected through the Vercel Marketplace. The build
+  (`npm run vercel-build` → `scripts/vercel-build.ts`) generates the PostgreSQL client, applies
+  `prisma/postgres/migrations` over the direct connection, seeds (create-only), then runs `next build`.
+- **Real-time:** WebSockets at `/api/ws` (`experimental_upgradeWebSocket`); events cross function instances
+  through **Upstash Redis** pub/sub (free, Singapore, auto-upgrade off). Hobby closes sockets every 5 minutes;
+  the client reconnects and refetches automatically.
+- **Functions** run in `sin1` (`vercel.json`), next to the database and Redis.
+- **Secrets** (Vercel → Project → Settings → Environment Variables): `JWT_SECRET`, `ADMIN_PASSWORD`,
+  `STAFF_PASSWORD`, `CANTEEN_TIMEZONE`, `SMS_PROVIDER`, `OTP_IP_HOURLY_LIMIT`. Neon and Upstash add their own.
+- **Order codes:** with `SMS_PROVIDER=console` the code is only in the Vercel logs
+  (`vercel logs --environment production`). For real SMS, set `SMS_PROVIDER=android-gateway-cloud`,
+  `SMS_GATEWAY_USER` and `SMS_GATEWAY_PASSWORD` from the SMS Gateway for Android app's **Cloud server** mode.
+- Local dev keeps using SQLite and `npm run dev`; `npm run test:pg` runs the integration tests on real PostgreSQL.
+
 ## Demo traffic simulator
 
 ```bash
