@@ -62,6 +62,35 @@ const menu: Record<string, SeedItem[]> = {
   ],
 };
 
+// Dish details: [spice 0-3, kcal, ingredients, allergens, tags, pairs-with]. Filled on first seed, and
+// back-filled once onto existing items that have none yet (admin edits are never overwritten).
+type Details = [spice: number, kcal: number, ingredients: string, allergens: string, tags: string, pairsWith: string];
+const details: Record<string, Details> = {
+  "Idli (2 pcs)": [0, 160, "Rice, Urad dal, Sambar, Coconut chutney", "", "bestseller", "Filter Coffee, Samosa"],
+  "Masala Dosa": [1, 380, "Rice, Urad dal, Potato, Onion, Mustard, Curry leaves", "", "bestseller", "Filter Coffee, Tea"],
+  "Pongal": [1, 330, "Rice, Moong dal, Ghee, Pepper, Cumin, Cashew", "Dairy, Nuts", "", "Filter Coffee, Idli (2 pcs)"],
+  "Poori Masala": [1, 420, "Wheat flour, Potato, Onion, Green chilli", "Gluten", "", "Tea, Filter Coffee"],
+  "Veg Meals": [2, 650, "Rice, Sambar, Rasam, Poriyal, Curd, Papad", "Dairy", "chef-special", "Fresh Lime Juice"],
+  "Curd Rice": [0, 300, "Rice, Curd, Mustard, Curry leaves, Ginger", "Dairy", "", "Onion Bajji"],
+  "Lemon Rice": [1, 340, "Rice, Lemon, Peanuts, Turmeric, Curry leaves", "Peanuts", "", "Curd Rice, Fresh Lime Juice"],
+  "Chicken Biryani": [2, 720, "Seeraga samba rice, Chicken, Spices, Mint, Raita", "Dairy", "bestseller", "Fresh Lime Juice, Egg Puff"],
+  "Egg Fried Rice": [1, 560, "Rice, Egg, Carrot, Beans, Soy sauce", "Egg, Soy", "new", "Fresh Lime Juice"],
+  "Samosa": [2, 260, "Wheat flour, Potato, Peas, Spices", "Gluten", "", "Tea, Filter Coffee"],
+  "Veg Puff": [1, 280, "Puff pastry, Mixed vegetables, Spices", "Gluten, Dairy", "", "Tea"],
+  "Egg Puff": [1, 300, "Puff pastry, Egg, Onion masala", "Gluten, Dairy, Egg", "new", "Tea"],
+  "Onion Bajji": [2, 240, "Onion, Gram flour, Chilli powder", "", "", "Tea, Filter Coffee"],
+  "Filter Coffee": [0, 110, "Coffee decoction, Milk, Sugar", "Dairy", "bestseller", "Idli (2 pcs), Masala Dosa"],
+  "Tea": [0, 90, "Tea, Milk, Ginger, Sugar", "Dairy", "", "Samosa, Onion Bajji"],
+  "Fresh Lime Juice": [0, 80, "Lime, Sugar, Salt, Water", "", "", "Chicken Biryani, Veg Meals"],
+};
+
+function detailData(name: string) {
+  const d = details[name];
+  if (!d) return {};
+  const [spiceLevel, calories, ingredients, allergens, tags, pairsWith] = d;
+  return { spiceLevel, calories, ingredients, allergens: allergens || null, tags, pairsWith };
+}
+
 async function main() {
   let createdUsers = 0;
   for (const u of users) {
@@ -96,8 +125,10 @@ async function main() {
         categoryId: category.id,
       };
       if (!existing) {
-        await prisma.menuItem.create({ data });
+        await prisma.menuItem.create({ data: { ...data, ...detailData(name) } });
         itemCount++;
+      } else if (existing.calories === null && existing.ingredients === null && existing.tags === "") {
+        await prisma.menuItem.update({ where: { id: existing.id }, data: detailData(name) });
       }
     }
   }

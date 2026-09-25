@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, UtensilsCrossed } from "lucide-react";
+import { ChevronRight, RotateCcw, UtensilsCrossed } from "lucide-react";
+import { useOrderAgain } from "@/hooks/useOrderAgain";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client-api";
@@ -13,19 +14,31 @@ import { formatDateTime } from "@/lib/time";
 import { useSocketEvent } from "@/hooks/useSocketEvent";
 import { StatusChip } from "./StatusBits";
 
-function OrderRow({ o }: { o: OrderDTO }) {
+function OrderRow({ o, onAgain, againBusy }: { o: OrderDTO; onAgain?: () => void; againBusy?: boolean }) {
   return (
-    <Link href={`/orders/${o.id}`} className="flex items-center gap-3 rounded-2xl border bg-card p-3.5 transition-colors hover:bg-muted/60">
-      <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-secondary font-display text-xl font-extrabold tabular">{o.tokenNumber}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-semibold">{o.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}</span>
-        <span className="block text-xs text-muted-foreground">
-          {formatDateTime(o.createdAt)} · {formatRupees(o.totalPaise)}
+    <div className="overflow-hidden rounded-2xl border bg-card">
+      <Link href={`/orders/${o.id}`} className="flex items-center gap-3 p-3.5 transition-colors hover:bg-muted/60">
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-secondary font-display text-xl font-extrabold tabular">{o.tokenNumber}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-semibold">{o.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}</span>
+          <span className="block text-xs text-muted-foreground">
+            {formatDateTime(o.createdAt)} · {formatRupees(o.totalPaise)}
+          </span>
         </span>
-      </span>
-      <StatusChip status={o.status} />
-      <ChevronRight className="size-4 text-muted-foreground" />
-    </Link>
+        <StatusChip status={o.status} />
+        <ChevronRight className="size-4 text-muted-foreground" />
+      </Link>
+      {onAgain && (
+        <button
+          type="button"
+          onClick={onAgain}
+          disabled={againBusy}
+          className="flex w-full items-center justify-center gap-2 border-t py-2.5 text-sm font-bold text-leaf transition-colors hover:bg-leaf-soft disabled:opacity-60"
+        >
+          <RotateCcw className="size-4" /> Order again
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -39,6 +52,7 @@ export function MyOrders() {
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
   });
   useSocketEvent("order:updated", (o) => applyOrderEvent(qc, o));
+  const { orderAgain, busy } = useOrderAgain();
 
   if (q.isLoading) {
     return (
@@ -80,7 +94,7 @@ export function MyOrders() {
         <section className="grid gap-2.5">
           <h2 className="text-sm font-bold tracking-wide text-muted-foreground uppercase">Last 30 days</h2>
           {history.map((o) => (
-            <OrderRow key={o.id} o={o} />
+            <OrderRow key={o.id} o={o} onAgain={() => orderAgain(o)} againBusy={busy} />
           ))}
           {q.hasNextPage && (
             <Button variant="outline" size="xl" onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}>

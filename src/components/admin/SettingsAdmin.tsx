@@ -19,6 +19,8 @@ function SettingsForm({ initial }: { initial: SettingsDTO }) {
     maxActiveOrders: String(initial.maxActiveOrders),
     isOpen: initial.isOpen,
     closedMessage: initial.closedMessage ?? "",
+    openingHours: initial.openingHours,
+    location: initial.location,
   });
   const [saving, setSaving] = useState(false);
 
@@ -33,6 +35,8 @@ function SettingsForm({ initial }: { initial: SettingsDTO }) {
           maxActiveOrders: Number(s.maxActiveOrders),
           isOpen: s.isOpen,
           closedMessage: s.closedMessage.trim() || null,
+          openingHours: s.openingHours.trim(),
+          location: s.location.trim(),
         },
       });
       toast.success("Settings saved");
@@ -64,6 +68,14 @@ function SettingsForm({ initial }: { initial: SettingsDTO }) {
           hint="Per student"
         />
       </div>
+      <Field
+        label="Opening hours"
+        name="openingHours"
+        value={s.openingHours}
+        onChange={(e) => setS({ ...s, openingHours: e.target.value })}
+        hint="Shown on the home page"
+      />
+      <Field label="Location" name="location" value={s.location} onChange={(e) => setS({ ...s, location: e.target.value })} />
       <label className="flex items-center justify-between rounded-2xl bg-secondary p-3 font-semibold">
         {s.isOpen ? "Canteen open" : "Canteen closed"}
         <Switch checked={s.isOpen} onCheckedChange={(v) => setS({ ...s, isOpen: v })} />

@@ -9,7 +9,7 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export function toCanteenStatus(s: Settings): CanteenStatus {
-  return { isOpen: s.isOpen, closedMessage: s.closedMessage, canteenName: s.canteenName };
+  return { isOpen: s.isOpen, closedMessage: s.closedMessage, canteenName: s.canteenName, openingHours: s.openingHours, location: s.location };
 }
 
 export type SettingsDTO = CanteenStatus & { minutesPerOrder: number; maxActiveOrders: number };

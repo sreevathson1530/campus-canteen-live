@@ -18,6 +18,22 @@ import type { MenuItemDTO } from "@/lib/realtime/events";
 import { DishImage } from "@/components/menu/DishImage";
 import { VegMark } from "@/components/menu/VegMark";
 import { MENU_KEY } from "@/hooks/useLiveMenu";
+import { SPICE_LABELS, TAG_META } from "@/components/menu/badges";
+import { cn } from "@/lib/utils";
+
+/** "a,  b ,,c" -> "a, b, c" */
+const tidyList = (v: string) =>
+  v
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .join(", ");
+
+const chipCls = (on: boolean) =>
+  cn(
+    "rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors",
+    on ? "border-leaf bg-leaf text-paper" : "bg-card hover:bg-muted",
+  );
 
 type Category = { id: string; name: string; sortOrder: number; itemCount: number };
 type Item = MenuItemDTO;
@@ -40,7 +56,15 @@ interface Draft {
   prepMinutes: string;
   stock: string;
   isAvailable: boolean;
+  spiceLevel: number;
+  calories: string;
+  ingredients: string;
+  allergens: string;
+  tags: string[];
+  pairsWith: string[];
 }
+
+const TAG_OPTIONS = Object.entries(TAG_META).map(([key, m]) => ({ key, label: m.label }));
 
 function toDraft(i: Item | null, categoryId: string): Draft {
   return i
@@ -56,6 +80,12 @@ function toDraft(i: Item | null, categoryId: string): Draft {
         prepMinutes: String(i.prepMinutes),
         stock: i.stock === null ? "" : String(i.stock),
         isAvailable: i.isAvailable,
+        spiceLevel: i.spiceLevel,
+        calories: i.calories === null ? "" : String(i.calories),
+        ingredients: i.ingredients.join(", "),
+        allergens: i.allergens.join(", "),
+        tags: i.tags,
+        pairsWith: i.pairsWith,
       }
     : {
         name: "",
@@ -68,6 +98,12 @@ function toDraft(i: Item | null, categoryId: string): Draft {
         prepMinutes: "5",
         stock: "",
         isAvailable: true,
+        spiceLevel: 0,
+        calories: "",
+        ingredients: "",
+        allergens: "",
+        tags: [],
+        pairsWith: [],
       };
 }
 
@@ -118,6 +154,12 @@ export function MenuAdmin() {
       prepMinutes: Number(draft.prepMinutes) || 5,
       stock: draft.stock === "" ? null : Number(draft.stock),
       isAvailable: draft.isAvailable,
+      spiceLevel: draft.spiceLevel,
+      calories: draft.calories === "" ? null : Number(draft.calories),
+      ingredients: tidyList(draft.ingredients) || null,
+      allergens: tidyList(draft.allergens) || null,
+      tags: draft.tags.join(","),
+      pairsWith: draft.pairsWith.join(", "),
     };
     setSaving(true);
     await run(
@@ -421,6 +463,114 @@ export function MenuAdmin() {
                   Use photos you&apos;re allowed to use, and credit them on the Credits page.
                 </p>
               </div>
+
+              <fieldset className="grid gap-4 rounded-2xl border p-3.5">
+                <legend className="px-1 text-sm font-bold">Dish details</legend>
+                <div className="grid gap-1.5">
+                  <span className="text-sm font-medium" id="it-spice-l">
+                    Spice level
+                  </span>
+                  <div role="radiogroup" aria-labelledby="it-spice-l" className="flex flex-wrap gap-2">
+                    {SPICE_LABELS.map((label, lvl) => (
+                      <button
+                        key={label}
+                        type="button"
+                        role="radio"
+                        aria-checked={draft.spiceLevel === lvl}
+                        onClick={() => setDraft({ ...draft, spiceLevel: lvl })}
+                        className={chipCls(draft.spiceLevel === lvl)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid gap-1.5">
+                  <span className="text-sm font-medium" id="it-tags-l">
+                    Badges
+                  </span>
+                  <div role="group" aria-labelledby="it-tags-l" className="flex flex-wrap gap-2">
+                    {TAG_OPTIONS.map((t) => {
+                      const on = draft.tags.includes(t.key);
+                      return (
+                        <button
+                          key={t.key}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() =>
+                            setDraft({ ...draft, tags: on ? draft.tags.filter((x) => x !== t.key) : [...draft.tags, t.key] })
+                          }
+                          className={chipCls(on)}
+                        >
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="it-kcal">Calories (kcal, optional)</Label>
+                  <Input
+                    id="it-kcal"
+                    inputMode="numeric"
+                    className="h-11 rounded-xl"
+                    value={draft.calories}
+                    onChange={(e) => setDraft({ ...draft, calories: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="it-ing">Ingredients (comma separated)</Label>
+                  <Input
+                    id="it-ing"
+                    className="h-11 rounded-xl"
+                    maxLength={300}
+                    placeholder="Rice, Urad dal, Sambar"
+                    value={draft.ingredients}
+                    onChange={(e) => setDraft({ ...draft, ingredients: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="it-all">Allergens (comma separated)</Label>
+                  <Input
+                    id="it-all"
+                    className="h-11 rounded-xl"
+                    maxLength={120}
+                    placeholder="Gluten, Dairy, Nuts"
+                    value={draft.allergens}
+                    onChange={(e) => setDraft({ ...draft, allergens: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <span className="text-sm font-medium" id="it-pair-l">
+                    Goes well with
+                  </span>
+                  <div role="group" aria-labelledby="it-pair-l" className="flex flex-wrap gap-2">
+                    {(items.data ?? [])
+                      .filter((o) => o.id !== draft.id)
+                      .map((o) => {
+                        const on = draft.pairsWith.some((n) => n.toLowerCase() === o.name.toLowerCase());
+                        return (
+                          <button
+                            key={o.id}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() =>
+                              setDraft({
+                                ...draft,
+                                pairsWith: on
+                                  ? draft.pairsWith.filter((n) => n.toLowerCase() !== o.name.toLowerCase())
+                                  : [...draft.pairsWith, o.name],
+                              })
+                            }
+                            className={chipCls(on)}
+                          >
+                            {o.name}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              </fieldset>
               <div className="flex flex-wrap gap-6">
                 <label className="flex items-center gap-2 text-sm font-semibold">
                   <Switch checked={draft.isVeg} onCheckedChange={(v) => setDraft({ ...draft, isVeg: v })} />{" "}

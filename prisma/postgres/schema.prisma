@@ -36,6 +36,12 @@ model MenuItem {
   isVeg       Boolean     @default(true)
   imageUrl    String? // rendered 3D still
   modelKey    String? // procedural 3D model key
+  spiceLevel  Int         @default(0) // 0 none, 1 mild, 2 medium, 3 hot
+  calories    Int? // kcal per serving
+  ingredients String? // comma-separated, shown as chips
+  allergens   String? // comma-separated, e.g. "Gluten, Dairy"
+  tags        String      @default("") // comma-separated badges: bestseller, new, chef-special
+  pairsWith   String      @default("") // comma-separated names of dishes that go well with this one
   prepMinutes Int         @default(5)
   isAvailable Boolean     @default(true)
   stock       Int? // null = unlimited
@@ -96,6 +102,8 @@ model Settings {
   closedMessage   String?
   minutesPerOrder Int      @default(3)
   maxActiveOrders Int      @default(3)
+  openingHours    String   @default("Mon–Sat · 7:30 AM – 7:30 PM")
+  location        String   @default("Main Block, Ground Floor")
   updatedAt       DateTime @updatedAt
 }
 

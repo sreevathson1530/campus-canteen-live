@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Bell, BellRing, ChevronLeft, Receipt, Timer } from "lucide-react";
+import { Bell, BellRing, ChevronLeft, Receipt, RotateCcw } from "lucide-react";
+import { useOrderAgain } from "@/hooks/useOrderAgain";
+import { CookingCard } from "./CookingCard";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,6 +49,7 @@ export function OrderTracker({ id }: { id: string }) {
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported",
   );
   const lastStatus = useRef<OrderStatus | null>(null);
+  const { orderAgain, busy: againBusy } = useOrderAgain();
 
   useSocketEvent("order:updated", (o) => {
     if (o.id === id) applyOrderEvent(qc, o);
@@ -176,17 +179,7 @@ export function OrderTracker({ id }: { id: string }) {
         </section>
       )}
 
-      {queue && (order.status === "PLACED" || order.status === "PREPARING") && (
-        <section className="flex items-center gap-4 rounded-3xl bg-turmeric-soft p-4 text-[#5e4105] dark:text-turmeric" aria-live="polite">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-turmeric/25">
-            <Timer className="size-6" />
-          </span>
-          <p className="text-base leading-snug font-semibold">
-            You are <b className="font-display text-2xl font-extrabold tabular">#{queue.position}</b> in the queue · about{" "}
-            <b className="font-display text-2xl font-extrabold tabular">{queue.etaMinutes}</b> min
-          </p>
-        </section>
-      )}
+      {(order.status === "PLACED" || order.status === "PREPARING") && <CookingCard order={order} queue={queue} />}
 
       {(order.status === "PLACED" || order.status === "PREPARING") && notifPerm === "default" && (
         <button
@@ -221,6 +214,12 @@ export function OrderTracker({ id }: { id: string }) {
           <span className="font-display text-2xl font-extrabold tabular">{formatRupees(order.totalPaise)}</span>
         </div>
       </section>
+
+      {(order.status === "COLLECTED" || order.status === "CANCELLED" || order.status === "REJECTED") && (
+        <Button size="xl" onClick={() => orderAgain(order)} disabled={againBusy}>
+          <RotateCcw /> Order this again
+        </Button>
+      )}
 
       {order.status === "PLACED" && (
         <Button variant="ghost" className="h-11 font-semibold text-chili hover:bg-chili-soft hover:text-chili" onClick={() => setConfirmCancel(true)}>

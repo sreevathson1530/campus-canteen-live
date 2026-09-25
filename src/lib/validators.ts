@@ -75,6 +75,8 @@ export const settingsSchema = z.object({
   closedMessage: optionalText(140),
   minutesPerOrder: z.number().int().min(1).max(60).optional(),
   maxActiveOrders: z.number().int().min(1).max(20).optional(),
+  openingHours: z.string().trim().min(2).max(80).optional(),
+  location: z.string().trim().min(2).max(80).optional(),
 });
 export type SettingsInput = z.infer<typeof settingsSchema>;
 
@@ -85,7 +87,7 @@ export const categorySchema = z.object({
   sortOrder: z.number().int().min(0).max(999).optional(),
 });
 
-export const itemSchema = z.object({
+const itemFields = {
   name: z.string().trim().min(2).max(60),
   description: optionalText(200),
   pricePaise: z.number().int().min(100).max(1_000_000),
@@ -93,12 +95,32 @@ export const itemSchema = z.object({
   categoryId: z.string().min(1),
   imageUrl: optionalText(500),
   modelKey: optionalText(40),
-  prepMinutes: z.number().int().min(1).max(120).default(5),
-  stock: z.number().int().min(0).max(9999).nullable().default(null),
-  isAvailable: z.boolean().default(true),
-  sortOrder: z.number().int().min(0).max(999).default(0),
+  spiceLevel: z.number().int().min(0).max(3),
+  calories: z.number().int().min(0).max(5000).nullable(),
+  ingredients: optionalText(300),
+  allergens: optionalText(120),
+  tags: z.string().trim().max(80),
+  pairsWith: z.string().trim().max(200),
+  prepMinutes: z.number().int().min(1).max(120),
+  stock: z.number().int().min(0).max(9999).nullable(),
+  isAvailable: z.boolean(),
+  sortOrder: z.number().int().min(0).max(999),
+};
+
+export const itemSchema = z.object({
+  ...itemFields,
+  spiceLevel: itemFields.spiceLevel.default(0),
+  calories: itemFields.calories.default(null),
+  tags: itemFields.tags.default(""),
+  pairsWith: itemFields.pairsWith.default(""),
+  prepMinutes: itemFields.prepMinutes.default(5),
+  stock: itemFields.stock.default(null),
+  isAvailable: itemFields.isAvailable.default(true),
+  sortOrder: itemFields.sortOrder.default(0),
 });
-export const itemPatchSchema = itemSchema.partial();
+// Built from the default-free fields: Zod 4 applies defaults inside optional fields, which would make
+// a one-field patch reset stock, availability and sort order.
+export const itemPatchSchema = z.object(itemFields).partial();
 
 export const reorderSchema = z.object({ ids: z.array(z.string().min(1)).min(1) });
 

@@ -73,3 +73,17 @@ One line of reasoning per choice the PRD left open, or per approved change to it
 - The test DB is a throwaway `prisma/test.db` rebuilt by `tests/global-setup.ts` (deletes only that file, then `db push`); integration files run serially because they share it.
 - The socket integration test runs the real auth/room module (`registerSocketServer`) on a real HTTP server with a random port, without booting Next, which keeps it fast and deterministic.
 - The simulator registers extra demo students when the seeded phones hit the OTP cooldown or hourly limit, still using only the public API.
+
+## Richer UI (home, menu, dish details, tracker, dashboard)
+
+- **Public home page at `/`.** Anonymous visitors and students see a landing page (spinning 3D dish, live wait, popular dishes, how it works, categories, hours and location); staff and admins still go straight to their screens. The hero's 3D viewer ignores touch (`interactive={false}`) so the page scrolls over it on phones.
+- **`GET /api/pulse`** is public and anonymous: open/closed, queue length, estimated wait `(queue + 1) × minutesPerOrder`, served today, and best-seller *ids* for the last 7 days. It carries no names, phones or order details, and is polled every 20 s (anonymous visitors have no WebSocket).
+- **Dish details are columns on `MenuItem`** (`spiceLevel`, `calories`, `ingredients`, `allergens`, `tags`, `pairsWith`) as comma-separated text, not new tables: they are short, admin-edited lists that are only ever read with the item. "Goes well with" matches dish names, so renaming a dish means updating its pairings.
+- The seed back-fills these details once onto existing items that have none yet (no calories, ingredients or tags), so production gets them without overwriting anything an admin already edited.
+- `Settings` gained `openingHours` and `location` for the home page.
+- **Fixed a Zod 4 trap:** `.partial()` of a schema with `.default()`s still applies the defaults, so a one-field item patch reset stock, availability and sort order. The patch schema is now built from default-free fields, with a regression test.
+- Menu search matches every word against name, description and ingredients; filters (Veg only, Under ₹50, Ready in 5 min, Not spicy) combine with AND.
+- `OrderDTO.items[].menuItemId` was added for "Order again", which re-adds dishes at today's prices, skips anything sold out, and opens the cart (`/menu?cart=1`).
+- The tracker's "ready by" time is anchored when the kitchen's ETA changes and the progress bar never shows 100 %: only the kitchen marks an order Ready.
+- Dashboard 7-day trends come from `GET /api/admin/insights` (polled every 30 s, not pushed); stock alerts come from the live menu, so they update instantly.
+- Horizontal scroll rows are `relative`: absolutely positioned screen-reader labels inside them otherwise escape the row's clipping and widen the whole page on phones.

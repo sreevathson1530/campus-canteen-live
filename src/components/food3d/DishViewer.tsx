@@ -28,7 +28,16 @@ const getReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduc
  * once the first frame is drawn. Without WebGL it renders nothing and the still stays visible.
  * With reduced motion there is no auto-rotate, float or steam, and frames render only on interaction.
  */
-export function DishViewer({ modelKey, className }: { modelKey: string; className?: string }) {
+export function DishViewer({
+  modelKey,
+  className,
+  interactive = true,
+}: {
+  modelKey: string;
+  className?: string;
+  /** false: a spinning showpiece that ignores touch, so the page still scrolls over it. */
+  interactive?: boolean;
+}) {
   const [supported] = useState(() => typeof window !== "undefined" && hasWebGL());
   const reduced = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, () => true);
   const [ready, setReady] = useState(false);
@@ -42,6 +51,7 @@ export function DishViewer({ modelKey, className }: { modelKey: string; classNam
         "transition-opacity duration-500",
         "bg-[radial-gradient(circle_at_50%_40%,#ffffff_0%,#f3ecdd_60%,#e5d8bf_100%)] dark:bg-[radial-gradient(circle_at_50%_40%,#35302a_0%,#201d19_70%)]",
         ready ? "opacity-100" : "opacity-0",
+        !interactive && "pointer-events-none",
         className,
       )}
       onPointerDown={() => setTouched(true)}
@@ -74,6 +84,7 @@ export function DishViewer({ modelKey, className }: { modelKey: string; classNam
           dampingFactor={0.08}
         />
       </Canvas>
+      {interactive && (
       <div
         className={cn(
           "pointer-events-none absolute inset-x-0 bottom-3 flex justify-center transition-opacity duration-700",
@@ -84,6 +95,7 @@ export function DishViewer({ modelKey, className }: { modelKey: string; classNam
           <Rotate3d className="size-3.5" /> Drag to spin · pinch to zoom
         </span>
       </div>
+      )}
     </div>
   );
 }

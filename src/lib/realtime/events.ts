@@ -10,7 +10,7 @@ export interface OrderDTO {
   note: string | null;
   rejectReason: string | null;
   studentFirstName: string;
-  items: { name: string; quantity: number; unitPricePaise: number }[];
+  items: { menuItemId: string; name: string; quantity: number; unitPricePaise: number }[];
   createdAt: string; // ISO strings for every date
   preparingAt: string | null;
   readyAt: string | null;
@@ -28,6 +28,12 @@ export interface MenuItemDTO {
   isVeg: boolean;
   imageUrl: string | null;
   modelKey: string | null;
+  spiceLevel: number; // 0 none .. 3 hot
+  calories: number | null;
+  ingredients: string[];
+  allergens: string[];
+  tags: string[]; // bestseller | new | chef-special
+  pairsWith: string[]; // dish names
   prepMinutes: number;
   isAvailable: boolean;
   stock: number | null;
@@ -54,6 +60,8 @@ export interface CanteenStatus {
   isOpen: boolean;
   closedMessage: string | null;
   canteenName: string;
+  openingHours: string;
+  location: string;
 }
 
 export interface ServerToClientEvents {

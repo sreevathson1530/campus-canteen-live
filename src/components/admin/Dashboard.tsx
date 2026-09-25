@@ -3,7 +3,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ChefHat, Clock3, IndianRupee, ListOrdered, Smartphone, XCircle, Activity } from "lucide-react";
+import Link from "next/link";
+import { ChefHat, Clock3, IndianRupee, ListOrdered, Smartphone, XCircle, Activity, AlertTriangle, Flame, Repeat, TrendingUp } from "lucide-react";
+import type { InsightsDTO } from "@/lib/insights";
+import { useLiveMenu } from "@/hooks/useLiveMenu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client-api";
 import { formatRupees } from "@/lib/money";
@@ -54,6 +57,24 @@ function Tile({
   );
 }
 
+function dayLabel(date: string, today: string): string {
+  if (date === today) return "Today";
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-IN", { weekday: "short", timeZone: "UTC" });
+}
+
+function DayTooltip({ active, payload }: { active?: boolean; payload?: { payload: { label: string; revenuePaise: number; orders: number } }[] }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="rounded-xl border bg-popover px-3 py-2 text-sm shadow-md">
+      <p className="font-semibold">{d.label}</p>
+      <p className="text-muted-foreground tabular">
+        {formatRupees(d.revenuePaise)} · {d.orders} {d.orders === 1 ? "order" : "orders"}
+      </p>
+    </div>
+  );
+}
+
 function HourTooltip({ active, payload }: { active?: boolean; payload?: { payload: { hour: number; count: number } }[] }) {
   if (!active || !payload?.length) return null;
   const { hour, count } = payload[0].payload;
@@ -73,6 +94,15 @@ export function Dashboard() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: STATS_KEY, queryFn: () => api<{ stats: StatsDTO }>("/api/admin/stats").then((r) => r.stats) });
   const [showTable, setShowTable] = useState(false);
+  const insights = useQuery({
+    queryKey: ["admin-insights"],
+    queryFn: () => api<{ insights: InsightsDTO }>("/api/admin/insights").then((r) => r.insights),
+    refetchInterval: 30_000,
+  });
+  const menu = useLiveMenu();
+  const lowStock = (menu.data?.items ?? [])
+    .filter((i) => !i.isAvailable || (i.stock !== null && i.stock <= 5))
+    .sort((a, b) => (a.isAvailable ? (a.stock ?? 99) : -1) - (b.isAvailable ? (b.stock ?? 99) : -1));
 
   useSocketEvent("stats:update", (s) => qc.setQueryData(STATS_KEY, s));
   useSocketEvent("presence:update", (p) => qc.setQueryData<StatsDTO>(STATS_KEY, (s) => (s ? { ...s, presence: p } : s)));
@@ -124,6 +154,34 @@ export function Dashboard() {
         />
         <Tile icon={XCircle} label="Cancelled / rejected" value={String(data.cancelledOrRejectedToday)} tone="chili" />
       </div>
+
+      {lowStock.length > 0 && (
+        <section className="rounded-3xl border border-chili/30 bg-chili-soft/60 p-4" aria-labelledby="low-h">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="size-5 text-chili" />
+            <h2 id="low-h" className="mr-auto font-display text-lg font-extrabold">
+              Stock alerts
+            </h2>
+            <Link href="/kitchen/stock" className="text-sm font-semibold text-chili hover:underline">
+              Manage stock →
+            </Link>
+          </div>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {lowStock.map((i) => (
+              <li
+                key={i.id}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-sm font-semibold",
+                  !i.isAvailable || i.stock === 0 ? "bg-chili text-white" : "bg-card text-foreground",
+                )}
+              >
+                {i.name} ·{" "}
+                <span className="tabular">{!i.isAvailable ? "off menu" : i.stock === 0 ? "sold out" : `${i.stock} left`}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <section className="rounded-3xl border bg-card p-4">
@@ -200,6 +258,62 @@ export function Dashboard() {
           )}
         </section>
       </div>
+
+      <WeekTrend data={insights.data} />
     </div>
+  );
+}
+
+function WeekTrend({ data }: { data: InsightsDTO | undefined }) {
+  if (!data) return <Skeleton className="h-72 rounded-3xl" />;
+  const today = data.days[data.days.length - 1]?.date;
+  const rows = data.days.map((d) => ({ ...d, label: dayLabel(d.date, today), rupees: d.revenuePaise / 100 }));
+  return (
+    <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]" aria-label="Last 7 days">
+      <div className="rounded-3xl border bg-card p-4">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="font-display text-lg font-extrabold">Revenue, last 7 days</h2>
+          <span className="font-display text-lg font-extrabold tabular">{formatRupees(data.weekRevenuePaise)}</span>
+        </div>
+        <div className="h-52 w-full" role="img" aria-label={`Revenue over the last 7 days, ${formatRupees(data.weekRevenuePaise)} in total.`}>
+          <ResponsiveContainer>
+            <BarChart data={rows} margin={{ top: 8, right: 4, left: -8, bottom: 0 }} barCategoryGap={10}>
+              <CartesianGrid vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+                tickFormatter={(v: number) => `₹${v >= 1000 ? `${Math.round(v / 100) / 10}k` : v}`}
+                width={48}
+              />
+              <Tooltip content={<DayTooltip />} cursor={{ fill: "var(--muted)", radius: 6 }} />
+              <Bar
+                dataKey="rupees"
+                fill="var(--chart-bar)"
+                radius={[6, 6, 0, 0]}
+                isAnimationActive={false}
+                shape={(props: React.ComponentProps<typeof Rectangle> & { payload?: { date: string } }) => (
+                  <Rectangle {...props} fillOpacity={props.payload?.date === today ? 1 : 0.55} />
+                )}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">Collected orders only. Today is the solid bar.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+        <Tile icon={TrendingUp} label="Orders this week" value={String(data.weekOrders)} tone="leaf" />
+        <Tile
+          icon={Flame}
+          label="Peak hour"
+          value={data.peakHour === null ? "—" : `${hourLabel(data.peakHour)}–${hourLabel((data.peakHour + 1) % 24)}`}
+          hint="Busiest hour this week"
+          tone="turmeric"
+        />
+        <Tile icon={IndianRupee} label="Avg order" value={data.avgOrderPaise === null ? "—" : formatRupees(data.avgOrderPaise)} />
+        <Tile icon={Repeat} label="Repeat students" value={String(data.repeatStudents)} hint="2+ orders this week" />
+      </div>
+    </section>
   );
 }

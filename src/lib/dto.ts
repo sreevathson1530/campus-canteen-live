@@ -26,7 +26,7 @@ export function toOrderDTO(o: OrderWithRelations): OrderDTO {
     note: o.note,
     rejectReason: o.rejectReason,
     studentFirstName: firstNameOf(o.user.name),
-    items: o.items.map((i) => ({ name: i.name, quantity: i.quantity, unitPricePaise: i.unitPricePaise })),
+    items: o.items.map((i) => ({ menuItemId: i.menuItemId, name: i.name, quantity: i.quantity, unitPricePaise: i.unitPricePaise })),
     createdAt: o.createdAt.toISOString(),
     preparingAt: iso(o.preparingAt),
     readyAt: iso(o.readyAt),
@@ -34,6 +34,11 @@ export function toOrderDTO(o: OrderWithRelations): OrderDTO {
     closedAt: iso(o.closedAt),
     billNumber: o.bill?.billNumber ?? null,
   };
+}
+
+/** "a, b ,c" -> ["a","b","c"]; empty or null -> []. */
+export function splitList(v: string | null | undefined): string[] {
+  return (v ?? "").split(",").map((x) => x.trim()).filter(Boolean);
 }
 
 export function toMenuItemDTO(m: MenuItem): MenuItemDTO {
@@ -46,6 +51,12 @@ export function toMenuItemDTO(m: MenuItem): MenuItemDTO {
     isVeg: m.isVeg,
     imageUrl: m.imageUrl,
     modelKey: m.modelKey,
+    spiceLevel: m.spiceLevel,
+    calories: m.calories,
+    ingredients: splitList(m.ingredients),
+    allergens: splitList(m.allergens),
+    tags: splitList(m.tags).map((t) => t.toLowerCase()),
+    pairsWith: splitList(m.pairsWith),
     prepMinutes: m.prepMinutes,
     isAvailable: m.isAvailable,
     stock: m.stock,
