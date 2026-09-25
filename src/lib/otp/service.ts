@@ -1,7 +1,7 @@
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 import { prisma, type Tx } from "../db";
 import { apiError } from "../api";
-import { rateLimit } from "../rate-limit";
+import { allow } from "../rate-limit";
 import { getSmsSender } from "../sms";
 
 export const CODE_TTL_MS = 5 * 60_000;
@@ -55,7 +55,7 @@ export async function sendOtp(userId: string, ip: string): Promise<SendResult> {
   }
   const sentThisHour = await prisma.otpChallenge.count({ where: { phone, createdAt: { gt: new Date(now - 3_600_000) } } });
   if (sentThisHour >= MAX_SENDS_PER_HOUR_PER_PHONE) apiError("RATE_LIMITED", "Too many codes for this number. Try again later.");
-  if (!rateLimit(`otp-ip:${ip}`, maxSendsPerHourPerIp(), 3_600_000)) apiError("RATE_LIMITED", "Too many codes requested. Try again later.");
+  if (!await allow(`otp-ip:${ip}`, maxSendsPerHourPerIp(), 3_600_000)) apiError("RATE_LIMITED", "Too many codes requested. Try again later.");
 
   const code = String(randomInt(0, 10_000)).padStart(4, "0");
   const challenge = await prisma.otpChallenge.create({

@@ -17,3 +17,18 @@ export function rateLimit(key: string, limit: number, windowMs: number, now: num
 export function resetRateLimits(): void {
   hits.clear();
 }
+
+/**
+ * The limiter used by routes. With Redis (Vercel: many instances) it's a shared fixed window, so a
+ * limit holds across instances; otherwise (one local process) the in-memory limiter above.
+ */
+export async function allow(key: string, limit: number, windowMs: number): Promise<boolean> {
+  const { getRedis } = await import("./realtime/bus");
+  const redis = getRedis();
+  if (!redis) return rateLimit(key, limit, windowMs);
+  const r = await redis;
+  const bucket = `ccl:rl:${key}:${Math.floor(Date.now() / windowMs)}`;
+  const n = await r.incr(bucket);
+  if (n === 1) await r.pexpire(bucket, windowMs);
+  return n <= limit;
+}

@@ -3,10 +3,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
-import { io, type Socket } from "socket.io-client";
-import type { ClientToServerEvents, ServerToClientEvents } from "@/lib/realtime/events";
+import { LiveSocket } from "@/lib/realtime/live-socket";
 
-export type ClientSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
+export type ClientSocket = LiveSocket;
 export type ConnectionStatus = "live" | "reconnecting" | "offline";
 
 interface ConnState {
@@ -25,7 +24,7 @@ const OFFLINE_AFTER_MS = 10_000;
 
 function createSocket(): ClientSocket | null {
   if (typeof window === "undefined") return null;
-  return io({ path: "/socket.io", withCredentials: true, autoConnect: false });
+  return new LiveSocket();
 }
 
 /** One socket per tab. On every reconnect the whole query cache is refetched so missed events are recovered. */

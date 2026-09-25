@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 import { businessDate, canteenHour } from "./time";
-import { getPresence } from "./realtime/io";
+import { getPresence } from "./realtime/hub";
 import type { StatsDTO } from "./realtime/events";
 
 export async function computeStats(date: string = businessDate()): Promise<StatsDTO> {
@@ -43,6 +43,6 @@ export async function computeStats(date: string = businessDate()): Promise<Stats
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .slice(0, 5)
       .map(([name, quantity]) => ({ name, quantity })),
-    presence: { ...getPresence() },
+    presence: await getPresence(),
   };
 }

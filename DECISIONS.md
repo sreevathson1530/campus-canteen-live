@@ -12,6 +12,12 @@ One line of reasoning per choice the PRD left open, or per approved change to it
 - **Real food photos** on cards, cart and dish sheet, from Wikimedia Commons under CC licences, credited on a public `/credits` page (CC BY-SA requires attribution). Google Images results were not used because most are copyrighted. `MenuItem.imageUrl` holds the photo, so no schema change was needed; the 3D still is derived from `modelKey`.
 - **3D food on tableware.** A Photo | 3D toggle in the dish sheet; models sit on a steel plate, a banana leaf on a steel plate, or an oval plate (dosa), with katoris for meals. Food is scaled to leave a visible rim and no longer floats (the owner found floating food unappetising).
 
+- **Plain WebSockets instead of Socket.IO (for Vercel).** Vercel runs Next.js as functions; Socket.IO can't live inside a Next.js route there, and a WebSocket is pinned to one function instance. So `/api/ws` is served by `experimental_upgradeWebSocket` on Vercel and by `server.ts` locally, and every event goes through a bus (`src/lib/realtime/bus.ts`): in-process locally, **Redis pub/sub** on Vercel, so an event published by any instance reaches sockets on every instance. Rooms, event names, payloads, emit-after-commit and snapshot+refetch-on-reconnect are unchanged.
+- The browser client (`live-socket.ts`) reconnects with jittered backoff (1-30 s), treats 50 s without a frame as a dead link (the server pings every 20 s), and on a failed first connect asks `/api/auth/me` to tell an expired session from a network problem. Vercel Hobby closes sockets at 300 s; the client reconnects and refetches, so nothing is missed.
+- Presence and rate limits move to Redis when `REDIS_URL`/`KV_URL` is set (per-instance presence keys with a 45 s TTL, summed; fixed-window counters), and stay in memory locally.
+- `scheduleStatsUpdate` hands its delayed send to `waitUntil` so a serverless function isn't frozen before the stats go out; every other emit is awaited before the response.
+- Locally, Next's dev server lazily attaches its own "upgrade" listener and would destroy our sockets, so `/api/ws` upgrades are intercepted in `httpServer.emit` before any listener runs.
+
 ## OTP details
 
 - Codes and tokens are stored as HMAC-SHA256 with `JWT_SECRET` as the key, so a database leak doesn't reveal usable codes.

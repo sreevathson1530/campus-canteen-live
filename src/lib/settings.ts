@@ -27,7 +27,7 @@ export async function updateSettings(input: SettingsInput, role: "STAFF" | "ADMI
     where: { id: 1 },
     data: Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)),
   });
-  emitCanteenStatus(toCanteenStatus(s));
+  await emitCanteenStatus(toCanteenStatus(s));
   scheduleStatsUpdate();
   return toSettingsDTO(s);
 }

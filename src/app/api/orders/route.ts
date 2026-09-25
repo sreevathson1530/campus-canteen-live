@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, handler, readJson } from "@/lib/api";
 import { requireRole, requireUser } from "@/lib/auth";
-import { rateLimit } from "@/lib/rate-limit";
+import { allow } from "@/lib/rate-limit";
 import { getBoard, listMyOrders, placeOrder } from "@/lib/orders/service";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const POST = handler(async (req) => {
   const user = await requireRole("STUDENT");
   const key = req.headers.get("idempotency-key");
-  if (!rateLimit(`orders:${user.id}`, 5, 60_000)) apiError("RATE_LIMITED", "Too many orders in a minute. Please wait.");
+  if (!await allow(`orders:${user.id}`, 5, 60_000)) apiError("RATE_LIMITED", "Too many orders in a minute. Please wait.");
   const { order, created } = await placeOrder(user, await readJson(req), key);
   return NextResponse.json({ order }, { status: created ? 201 : 200 });
 });

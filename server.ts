@@ -1,7 +1,6 @@
 import { createServer } from "node:http";
 import { existsSync } from "node:fs";
 import next from "next";
-import { Server } from "socket.io";
 
 // Load .env with Node's own loader, not @next/env: @next/env snapshots process.env on first use and
 // restores that snapshot when Next reloads env (e.g. after a new route appears in dev). Calling it here,
@@ -12,8 +11,8 @@ async function main() {
   // Fail fast on a missing or weak JWT_SECRET, or OTP_DEV_CODE in production.
   const { env } = await import("./src/lib/env");
   const cfg = env();
-  const { setIO } = await import("./src/lib/realtime/io");
-  const { registerSocketServer } = await import("./src/lib/realtime/socket-server");
+  const { attachWebSocket } = await import("./src/lib/realtime/ws-server");
+  const { closeAll } = await import("./src/lib/realtime/hub");
   const { prisma, ensurePragmas } = await import("./src/lib/db");
 
   await ensurePragmas();
@@ -22,7 +21,7 @@ async function main() {
   const hostname = cfg.BIND_HOST;
   const port = cfg.PORT;
   const httpServer = createServer();
-  const app = next({ dev, hostname, port, httpServer });
+  const app = next({ dev, hostname, port });
   const handle = app.getRequestHandler();
   await app.prepare();
 
@@ -34,21 +33,8 @@ async function main() {
     void handle(req, res);
   });
 
-  const io = new Server<
-    import("./src/lib/realtime/events").ClientToServerEvents,
-    import("./src/lib/realtime/events").ServerToClientEvents,
-    Record<string, never>,
-    import("./src/lib/realtime/events").SocketData
-  >(httpServer, {
-    path: "/socket.io",
-    // Notice dead phones (walked out of Wi-Fi range) within ~18 s instead of ~45 s.
-    pingInterval: 10_000,
-    pingTimeout: 8_000,
-    // Leave other WebSocket upgrades (Next.js dev HMR) alone.
-    destroyUpgrade: false,
-  });
-  setIO(io);
-  registerSocketServer(io);
+  // Live events: WebSockets at /api/ws; every other upgrade (Next dev HMR) is left to Next.
+  const wss = attachWebSocket(httpServer);
 
   httpServer.listen(port, hostname, () => {
     console.log(`> Campus Canteen Live ready on http://localhost:${port} (${dev ? "dev" : "production"})`);
@@ -61,7 +47,8 @@ async function main() {
     if (shuttingDown) return;
     shuttingDown = true;
     console.log(`\n> ${signal} received, shutting down`);
-    io.close();
+    closeAll();
+    wss.close();
     httpServer.close();
     await prisma.$disconnect();
     process.exit(0);

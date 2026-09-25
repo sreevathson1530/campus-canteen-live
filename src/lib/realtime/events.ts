@@ -67,10 +67,5 @@ export interface ServerToClientEvents {
   "presence:update": (p: Presence) => void;
 }
 
-// There are no custom client-to-server events. Clients only connect and receive.
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ClientToServerEvents {}
-
-export interface SocketData {
-  user: { id: string; role: Role; firstName: string };
-}
+/** Wire format: the server sends JSON frames { e: event, d: payload }. Clients never send events. */
+export type ServerFrame = { [E in keyof ServerToClientEvents]: { e: E; d: Parameters<ServerToClientEvents[E]>[0] } }[keyof ServerToClientEvents];

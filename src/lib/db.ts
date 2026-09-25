@@ -8,6 +8,11 @@ const g = globalThis as unknown as { __prisma?: PrismaClient; __prismaPragmas?: 
  */
 function datasourceUrl(): string | undefined {
   const url = process.env.DATABASE_URL;
+  // Neon's pooled endpoint (PgBouncer, transaction mode) on Vercel: tell Prisma, and keep pools small
+  // because every function instance opens its own.
+  if (url && url.includes("-pooler.") && !url.includes("pgbouncer=")) {
+    return `${url}${url.includes("?") ? "&" : "?"}pgbouncer=true&connection_limit=5&connect_timeout=15`;
+  }
   if (!url || !url.startsWith("file:") || url.includes("connection_limit")) return url;
   return `${url}${url.includes("?") ? "&" : "?"}connection_limit=1`;
 }

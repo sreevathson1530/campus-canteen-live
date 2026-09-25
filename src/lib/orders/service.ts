@@ -152,8 +152,8 @@ export async function placeOrder(
   // 5. After commit.
   const dto = await loadOrderDTO(orderId);
   await afterCommit(async () => {
-    emitOrderCreated(dto);
-    for (const item of stockChanged) emitMenuItemUpdated(toMenuItemDTO(item));
+    await emitOrderCreated(dto);
+    await Promise.all(stockChanged.map((item) => emitMenuItemUpdated(toMenuItemDTO(item))));
     await emitQueueUpdates();
     scheduleStatsUpdate();
   });
@@ -230,8 +230,8 @@ async function applyTransition(
 
   const dto = await loadOrderDTO(orderId);
   await afterCommit(async () => {
-    emitOrderUpdated(dto, order.userId);
-    for (const item of restored) emitMenuItemUpdated(toMenuItemDTO(item));
+    await emitOrderUpdated(dto, order.userId);
+    await Promise.all(restored.map((item) => emitMenuItemUpdated(toMenuItemDTO(item))));
     await emitQueueUpdates();
     scheduleStatsUpdate();
   });

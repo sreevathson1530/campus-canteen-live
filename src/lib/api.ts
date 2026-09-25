@@ -117,5 +117,8 @@ export async function readJson(req: Request): Promise<unknown> {
 }
 
 export function clientIp(req: Request): string {
+  // On Vercel, x-real-ip is set by the platform. Locally, server.ts overwrites x-forwarded-for with the
+  // socket address (unless TRUST_PROXY=1), so neither can be spoofed by the client.
+  if (process.env.VERCEL) return req.headers.get("x-real-ip") || "unknown";
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
 }
