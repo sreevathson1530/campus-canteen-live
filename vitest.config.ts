@@ -11,7 +11,8 @@ export default defineConfig({
     testTimeout: 30_000,
     env: {
       NODE_ENV: "test",
-      DATABASE_URL: "file:./test.db",
+      // npm run test:pg points this at a throwaway PostgreSQL instead.
+      DATABASE_URL: process.env.TEST_DATABASE_URL ?? "file:./test.db",
       JWT_SECRET: "test-secret-test-secret-test-secret-0123",
       CANTEEN_TIMEZONE: "Asia/Kolkata",
       SMS_PROVIDER: "console",

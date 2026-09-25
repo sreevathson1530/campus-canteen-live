@@ -7,6 +7,8 @@ import path from "node:path";
  * never dev.db, then the schema is pushed into the empty file (no reset needed).
  */
 export default function setup(): void {
+  // PostgreSQL runs (npm run test:pg) are migrated by scripts/test-postgres.ts instead.
+  if (process.env.TEST_DATABASE_URL) return;
   const dir = path.resolve(__dirname, "../prisma");
   for (const suffix of ["", "-journal", "-wal", "-shm"]) {
     rmSync(path.join(dir, `test.db${suffix}`), { force: true });

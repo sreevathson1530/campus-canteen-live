@@ -11,3 +11,4 @@ test-results
 playwright-report
 coverage
 *.tmp.mjs
+.pg-test

@@ -21,7 +21,8 @@
     "test:e2e": "playwright test",
     "db:pg-schema": "tsx scripts/pg-schema.ts",
     "render:build": "prisma generate --schema prisma/postgres/schema.prisma && next build",
-    "render:start": "prisma migrate deploy --schema prisma/postgres/schema.prisma && tsx prisma/seed.ts && tsx server.ts"
+    "render:start": "prisma migrate deploy --schema prisma/postgres/schema.prisma && tsx prisma/seed.ts && tsx server.ts",
+    "test:pg": "tsx scripts/test-postgres.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -63,7 +64,8 @@
     "@prisma/engines@6.19.3": true,
     "prisma@6.19.3": true,
     "esbuild@0.28.2": true,
-    "unrs-resolver@1.12.2": true
+    "unrs-resolver@1.12.2": true,
+    "@embedded-postgres/windows-x64@18.4.0-beta.17": true
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
@@ -75,6 +77,7 @@
     "@types/three": "^0.186.0",
     "@vitest/coverage-v8": "^5.0.1",
     "cross-env": "^10.1.0",
+    "embedded-postgres": "^18.4.0-beta.17",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.6",
     "postcss": "^8.5.28",
