@@ -8,7 +8,7 @@ const schema = z.object({
   BIND_HOST: z.string().default("0.0.0.0"),
   CANTEEN_TIMEZONE: z.string().default("Asia/Kolkata"),
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
-  SMS_PROVIDER: z.enum(["console", "android-gateway"]).default("console"),
+  SMS_PROVIDER: z.enum(["console", "android-gateway", "android-gateway-cloud"]).default("console"),
   SMS_GATEWAY_URL: z.string().optional(),
   SMS_GATEWAY_USER: z.string().optional(),
   SMS_GATEWAY_PASSWORD: z.string().optional(),

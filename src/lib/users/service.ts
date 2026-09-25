@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import type { z } from "zod";
 import { prisma } from "../db";
 import { ApiError } from "../api";
+import { caseVariants } from "../search";
 import type { registerSchema } from "../validators";
 
 export type PublicUser = {
@@ -69,7 +70,7 @@ export async function searchUsers(q: string | undefined, page = 1) {
   const where = term
     ? {
         OR: [
-          { name: { contains: term } },
+          ...caseVariants(term).map((v) => ({ name: { contains: v } })),
           { email: { contains: term.toLowerCase() } },
           { rollNumber: { contains: term.toUpperCase() } },
           ...(digits && digits.length >= 3 ? [{ phone: { contains: digits } }] : []),

@@ -15,8 +15,11 @@ function datasourceUrl(): string | undefined {
 export const prisma: PrismaClient = g.__prisma ?? new PrismaClient({ datasourceUrl: datasourceUrl() });
 if (process.env.NODE_ENV !== "production") g.__prisma = prisma;
 
-/** WAL + busy timeout (see PRD 8.1). */
+export const isSqlite = () => (process.env.DATABASE_URL ?? "").startsWith("file:");
+
+/** WAL + busy timeout (see PRD 8.1). SQLite only; PostgreSQL (production) needs neither. */
 export function ensurePragmas(): Promise<void> {
+  if (!isSqlite()) return Promise.resolve();
   g.__prismaPragmas ??= (async () => {
     await prisma.$queryRawUnsafe("PRAGMA journal_mode = WAL");
     await prisma.$queryRawUnsafe("PRAGMA busy_timeout = 5000");

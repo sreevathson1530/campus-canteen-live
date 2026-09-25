@@ -10,5 +10,7 @@ export interface SmsSender {
 }
 
 export function getSmsSender(): SmsSender {
-  return process.env.SMS_PROVIDER === "android-gateway" ? androidGatewaySender() : consoleSender;
+  if (process.env.SMS_PROVIDER === "android-gateway") return androidGatewaySender("local");
+  if (process.env.SMS_PROVIDER === "android-gateway-cloud") return androidGatewaySender("cloud");
+  return consoleSender;
 }

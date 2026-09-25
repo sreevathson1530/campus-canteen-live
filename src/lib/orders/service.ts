@@ -88,9 +88,10 @@ export async function placeOrder(
         }
       }
 
-      // Conditional decrement: exactly the protection against overselling.
+      // Conditional decrement: exactly the protection against overselling. Rows are locked in
+      // id order so two concurrent orders can't deadlock on PostgreSQL.
       const decremented: string[] = [];
-      for (const line of body.lines) {
+      for (const line of [...body.lines].sort((a, b) => a.menuItemId.localeCompare(b.menuItemId))) {
         const item = byId.get(line.menuItemId)!;
         if (item.stock === null) continue;
         const res = await tx.menuItem.updateMany({
@@ -212,7 +213,7 @@ async function applyTransition(
         select: { id: true },
       });
       const limitedIds = new Set(limited.map((l) => l.id));
-      for (const line of order.items) {
+      for (const line of [...order.items].sort((a, b) => a.menuItemId.localeCompare(b.menuItemId))) {
         if (!limitedIds.has(line.menuItemId)) continue;
         await tx.menuItem.update({ where: { id: line.menuItemId }, data: { stock: { increment: line.quantity } } });
       }

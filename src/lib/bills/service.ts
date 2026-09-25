@@ -1,6 +1,7 @@
 import { prisma, type Tx } from "../db";
 import { apiError } from "../api";
 import { maskPhone } from "../otp/service";
+import { caseVariants } from "../search";
 import type { Role } from "../realtime/events";
 
 /** "CCL-YYYYMMDD-<token>" from the order's business date. Unique because (date, token) is unique. */
@@ -102,7 +103,7 @@ export async function searchBills(opts: { q?: string; date?: string; page?: numb
         ? {
             OR: [
               { billNumber: { contains: q.toUpperCase() } },
-              { studentName: { contains: q } },
+              ...caseVariants(q).map((v) => ({ studentName: { contains: v } })),
               ...(digits && digits.length >= 3 ? [{ studentPhone: { contains: digits } }] : []),
             ],
           }

@@ -1,18 +1,37 @@
-// Idempotent seed: safe to run again; it upserts and never creates orders.
+// Idempotent seed: creates only what's missing (never overwrites menu edits or stock) and never creates orders.
+// Production (NODE_ENV=production) requires ADMIN_PASSWORD and STAFF_PASSWORD, and skips the demo
+// students, whose made-up phone numbers must never receive real SMS.
 import nextEnv from "@next/env";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
 nextEnv.loadEnvConfig(process.cwd());
 const prisma = new PrismaClient();
+const isProd = process.env.NODE_ENV === "production";
 
-const users = [
-  { role: "ADMIN", name: "Canteen Admin", email: "admin@canteen.test", password: "admin123", phone: null },
-  { role: "STAFF", name: "Kitchen Staff", email: "kitchen@canteen.test", password: "kitchen123", phone: null },
-  { role: "STUDENT", name: "Asha Raman", email: "asha@canteen.test", password: "student123", phone: "+919000000001" },
-  { role: "STUDENT", name: "Ravi Kumar", email: "ravi@canteen.test", password: "student123", phone: "+919000000002" },
-  { role: "STUDENT", name: "Meena Iyer", email: "meena@canteen.test", password: "student123", phone: "+919000000003" },
-] as const;
+function secret(name: string, devDefault: string): string {
+  const v = process.env[name];
+  if (v) {
+    if (v.length < 8) throw new Error(`${name} must be at least 8 characters`);
+    return v;
+  }
+  if (isProd) throw new Error(`${name} is required in production`);
+  return devDefault;
+}
+
+type SeedUser = { role: string; name: string; email: string; password: string; phone: string | null };
+
+const users: SeedUser[] = [
+  { role: "ADMIN", name: "Canteen Admin", email: process.env.ADMIN_EMAIL || "admin@canteen.test", password: secret("ADMIN_PASSWORD", "admin123"), phone: null },
+  { role: "STAFF", name: "Kitchen Staff", email: process.env.STAFF_EMAIL || "kitchen@canteen.test", password: secret("STAFF_PASSWORD", "kitchen123"), phone: null },
+  ...(!isProd || process.env.SEED_DEMO_STUDENTS === "1"
+    ? [
+        { role: "STUDENT", name: "Asha Raman", email: "asha@canteen.test", password: "student123", phone: "+919000000001" },
+        { role: "STUDENT", name: "Ravi Kumar", email: "ravi@canteen.test", password: "student123", phone: "+919000000002" },
+        { role: "STUDENT", name: "Meena Iyer", email: "meena@canteen.test", password: "student123", phone: "+919000000003" },
+      ]
+    : []),
+];
 
 type SeedItem = [name: string, rupees: number, isVeg: boolean, stock: number | null, modelKey: string, prep: number, desc: string];
 
@@ -44,13 +63,12 @@ const menu: Record<string, SeedItem[]> = {
 };
 
 async function main() {
+  let createdUsers = 0;
   for (const u of users) {
+    if (await prisma.user.findUnique({ where: { email: u.email } })) continue;
     const passwordHash = await bcrypt.hash(u.password, 10);
-    await prisma.user.upsert({
-      where: { email: u.email },
-      update: { name: u.name, role: u.role, phone: u.phone },
-      create: { name: u.name, email: u.email, role: u.role, passwordHash, phone: u.phone },
-    });
+    await prisma.user.create({ data: { name: u.name, email: u.email, role: u.role, passwordHash, phone: u.phone } });
+    createdUsers++;
   }
 
   let catOrder = 0;
@@ -58,7 +76,7 @@ async function main() {
   for (const [catName, items] of Object.entries(menu)) {
     const category = await prisma.category.upsert({
       where: { name: catName },
-      update: { sortOrder: catOrder },
+      update: {},
       create: { name: catName, sortOrder: catOrder },
     });
     catOrder++;
@@ -77,9 +95,10 @@ async function main() {
         sortOrder: sort++,
         categoryId: category.id,
       };
-      if (existing) await prisma.menuItem.update({ where: { id: existing.id }, data });
-      else await prisma.menuItem.create({ data });
-      itemCount++;
+      if (!existing) {
+        await prisma.menuItem.create({ data });
+        itemCount++;
+      }
     }
   }
 
@@ -89,7 +108,7 @@ async function main() {
     create: { id: 1, canteenName: "Campus Canteen", isOpen: true, minutesPerOrder: 3, maxActiveOrders: 3 },
   });
 
-  console.log(`Seeded ${users.length} users, ${catOrder} categories, ${itemCount} items and settings.`);
+  console.log(`Seed: ${createdUsers} new users, ${itemCount} new menu items (existing data left untouched).`);
 }
 
 main()
