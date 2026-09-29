@@ -4,6 +4,7 @@ import { orderInclude, toMenuItemDTO, toOrderDTO } from "../dto";
 import { businessDate } from "../time";
 import { consumeOtpToken } from "../otp/service";
 import { createBillInTx } from "../bills/service";
+import { queueBillEmail } from "../bills/email";
 import { queuePositions } from "./queue";
 import { ACTIVE_STATUSES, canTransition, isKnownTransition, TIMESTAMP_FOR } from "./transitions";
 import { placeOrderSchema, rejectReasonOk, transitionSchema } from "../validators";
@@ -235,6 +236,7 @@ async function applyTransition(
     await emitQueueUpdates();
     scheduleStatsUpdate();
   });
+  if (to === "COLLECTED") queueBillEmail(orderId);
   return dto;
 }
 

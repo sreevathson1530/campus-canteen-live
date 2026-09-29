@@ -88,3 +88,9 @@ One line of reasoning per choice the PRD left open, or per approved change to it
 - The tracker's "ready by" time is anchored when the kitchen's ETA changes and the progress bar never shows 100 %: only the kitchen marks an order Ready.
 - Dashboard 7-day trends come from `GET /api/admin/insights` (polled every 30 s, not pushed); stock alerts come from the live menu, so they update instantly.
 - Horizontal scroll rows are `relative`: absolutely positioned screen-reader labels inside them otherwise escape the row's clipping and widen the whole page on phones.
+
+## Admin orders and emailed bills
+
+- **Admin → Orders** lists every order with the student's name, email and phone, dishes, note, status timeline and bill. Tabs: Current (placed/preparing/ready, oldest first like the kitchen queue), Today, This week, This month, All (newest first); status chips with counts; search by token, name, email, phone or bill number. It refreshes live on any order event (coalesced to one refetch per 600 ms).
+- **Earnings** are collected orders only (cancelled, rejected and not-yet-collected orders earn nothing), by business date in the canteen's timezone: today, the week from Monday, and the month from the 1st.
+- **Bills are emailed** to the student's account email right after collection. The email runs after the response (`waitUntil`), so a slow or failed send never blocks the kitchen's Collect; failures are logged. `Bill.emailedAt` records the send; admins can resend from the order. The bill itself is unchanged: the email is a copy of it.

@@ -1,5 +1,6 @@
 import { getEmailSender } from "../email";
 import { getSmsSender } from "../sms";
+import { escapeHtml } from "../email/html";
 
 export type OtpChannel = "email" | "sms";
 
@@ -18,10 +19,6 @@ export function maskEmail(email: string): string {
   if (!domain) return "your email";
   const hidden = local.length <= 2 ? `${local[0]}•` : `${local[0]}•••••${local[local.length - 1]}`;
   return `${hidden}@${domain}`;
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
 export function otpEmail(code: string, firstName: string) {

@@ -35,6 +35,7 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   ADMIN: [
     { href: "/admin", label: "Live", icon: BarChart3, exact: true },
+    { href: "/admin/orders", label: "Orders", icon: ClipboardList },
     { href: "/kitchen", label: "Kitchen", icon: ChefHat, exact: true },
     { href: "/admin/menu", label: "Menu", icon: Soup },
     { href: "/admin/bills", label: "Bills", icon: Receipt },

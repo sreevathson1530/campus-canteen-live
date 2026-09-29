@@ -140,6 +140,7 @@ model Bill {
   readyAt         DateTime?
   collectedAt     DateTime
   collectedByName String
+  emailedAt       DateTime? // when the bill was emailed to the student
   createdAt       DateTime   @default(now())
   lines           BillLine[]
 
