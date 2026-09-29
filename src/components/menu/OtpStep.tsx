@@ -8,7 +8,8 @@ import { formatRupees } from "@/lib/money";
 interface SendResult {
   expiresAt: string;
   resendAt: string;
-  maskedPhone: string;
+  channel: "email" | "sms";
+  maskedTo: string;
 }
 
 function useCountdown(targetIso: string | null): number {
@@ -58,7 +59,7 @@ export function OtpStep({
       if (e instanceof ClientApiError && e.code === "RATE_LIMITED" && sent === null) {
         // A code was sent a moment ago (e.g. the sheet was reopened): let them type it.
         const wait = Number(e.details.retryAfterSeconds ?? 30);
-        setSent({ expiresAt: new Date(Date.now() + 4.5 * 60_000).toISOString(), resendAt: new Date(Date.now() + wait * 1000).toISOString(), maskedPhone: "your phone" });
+        setSent({ expiresAt: new Date(Date.now() + 4.5 * 60_000).toISOString(), resendAt: new Date(Date.now() + wait * 1000).toISOString(), channel: "email", maskedTo: "you" });
         setError(e.message);
       } else {
         setError(e instanceof ClientApiError ? e.message : "Couldn't send the code. Check your connection.");
@@ -107,7 +108,10 @@ export function OtpStep({
         <div>
           <h3 className="font-display text-xl font-extrabold">Confirm it&apos;s you</h3>
           <p className="text-sm text-muted-foreground" aria-live="polite">
-            {sending && !sent ? "Sending a 4-digit code…" : sent ? <>We sent a 4-digit code to <b className="text-foreground">+91 {sent.maskedPhone}</b></> : "We couldn't send a code yet."}
+            {sending && !sent ? "Sending a 4-digit code…" : sent ? <>
+                We sent a 4-digit code to <b className="text-foreground">{sent.maskedTo}</b>
+                {sent.channel === "email" && ". Check your inbox (and spam)."}
+              </> : "We couldn't send a code yet."}
           </p>
         </div>
       </div>

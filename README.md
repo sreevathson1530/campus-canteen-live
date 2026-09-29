@@ -42,8 +42,9 @@ The login page has a **Demo accounts** shortcut that fills these in.
 
 ### Order codes (OTP) in development
 
-With `SMS_PROVIDER=console` (the default) no SMS is sent: the code is **printed in the server
-terminal**, e.g. `📱 SMS to +919000000001: 4821 is your Campus Canteen order code`.
+Codes go to the student's **email** by default (`OTP_CHANNEL=email`). With `EMAIL_PROVIDER=console`
+(the default) nothing is sent: the code is **printed in the server terminal**, e.g.
+`✉️ Email to asha@canteen.test: 4821 is your Campus Canteen order code`.
 `OTP_DEV_CODE=1234` is also accepted in development and tests. The server refuses to start in
 production if `OTP_DEV_CODE` is set.
 
@@ -63,9 +64,22 @@ production if `OTP_DEV_CODE` is set.
    - **Admin** (phone or laptop): `admin@canteen.test` → live dashboard.
 5. Optional: `npm run simulate -- --kitchen` fills the board with live traffic.
 
-### Real SMS for free: your own Android phone as the gateway
+### Real order codes by email (free): Gmail
 
-Codes can be sent from an Android phone's SIM, using
+1. On the Gmail account that will send codes, turn on **2-Step Verification**
+   (myaccount.google.com → Security).
+2. Open **myaccount.google.com/apppasswords**, create an app password named "Canteen" and copy
+   the 16 letters.
+3. Set `EMAIL_PROVIDER=smtp`, `SMTP_USER=<the gmail address>`, `SMTP_PASSWORD=<the app password>`.
+4. Restart. **Admin → Settings → Order codes** shows whether sending works and today's count.
+
+Gmail allows about **500 emails a day** for free, needs no domain, and delivers to any address.
+The first few codes may land in spam until students mark them "Not spam". Revoke the app password
+at myaccount.google.com/apppasswords at any time; sending stops until a new one is set.
+
+### Or real SMS for free: your own Android phone as the gateway
+
+Set `OTP_CHANNEL=sms`. Codes can then be sent from an Android phone's SIM, using
 [SMS Gateway for Android](https://github.com/capcom6/android-sms-gateway) (free, open source):
 
 1. Install the app on an Android phone with a SIM, on the same Wi-Fi as the laptop.
@@ -99,10 +113,12 @@ Switching to a paid provider later is one new file in `src/lib/sms/`.
   the client reconnects and refetches automatically.
 - **Functions** run in `sin1` (`vercel.json`), next to the database and Redis.
 - **Secrets** (Vercel → Project → Settings → Environment Variables): `JWT_SECRET`, `ADMIN_PASSWORD`,
-  `STAFF_PASSWORD`, `CANTEEN_TIMEZONE`, `SMS_PROVIDER`, `OTP_IP_HOURLY_LIMIT`. Neon and Upstash add their own.
-- **Order codes:** with `SMS_PROVIDER=console` the code is only in the Vercel logs
-  (`vercel logs --environment production`). For real SMS, set `SMS_PROVIDER=android-gateway-cloud`,
-  `SMS_GATEWAY_USER` and `SMS_GATEWAY_PASSWORD` from the SMS Gateway for Android app's **Cloud server** mode.
+  `STAFF_PASSWORD`, `CANTEEN_TIMEZONE`, `EMAIL_PROVIDER`, `SMTP_USER`, `SMTP_PASSWORD`, `OTP_IP_HOURLY_LIMIT`.
+  Neon and Upstash add their own.
+- **Order codes:** emailed through Gmail when `EMAIL_PROVIDER=smtp` (see above). With `console` the code is
+  only in the Vercel logs (`vercel logs --environment production`). For SMS instead, set `OTP_CHANNEL=sms`,
+  `SMS_PROVIDER=android-gateway-cloud`, `SMS_GATEWAY_USER` and `SMS_GATEWAY_PASSWORD` from the SMS Gateway
+  for Android app's **Cloud server** mode.
 - Local dev keeps using SQLite and `npm run dev`; `npm run test:pg` runs the integration tests on real PostgreSQL.
 
 ## Demo traffic simulator

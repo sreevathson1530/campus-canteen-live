@@ -91,14 +91,14 @@ function SettingsForm({ initial }: { initial: SettingsDTO }) {
 function SmsStatus() {
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["sms-status"],
-    queryFn: () => api<{ provider: string; online: boolean; sentToday: number }>("/api/admin/sms-status"),
+    queryFn: () => api<{ channel: "email" | "sms"; provider: string; online: boolean; sentToday: number }>("/api/admin/sms-status"),
   });
-  const DAILY_FREE = 100;
+  const DAILY_FREE = { email: 500, sms: 100 };
   return (
     <section className="grid gap-3 rounded-3xl border bg-card p-5">
       <div className="flex items-center gap-2">
         <MessageSquareText className="size-5 text-leaf" />
-        <h2 className="mr-auto font-display text-lg font-extrabold">OTP SMS</h2>
+        <h2 className="mr-auto font-display text-lg font-extrabold">Order codes</h2>
         <Button variant="outline" className="h-9 rounded-full" onClick={() => refetch()} disabled={isFetching}>
           Check
         </Button>
@@ -109,11 +109,20 @@ function SmsStatus() {
         <>
           <div className={cn("flex items-center gap-2 rounded-2xl p-3 font-semibold", data.online ? "bg-leaf-soft text-leaf" : "bg-chili-soft text-chili")}>
             {data.online ? <Wifi className="size-4" /> : <WifiOff className="size-4" />}
-            {data.provider === "console" ? "Development mode: codes print in the server terminal" : data.online ? "Gateway phone online" : "Gateway phone offline"}
+            {data.provider === "console"
+              ? "Test mode: codes only appear in the server logs"
+              : data.channel === "email"
+                ? data.online
+                  ? "Email sending is working"
+                  : "Can't sign in to the email account"
+                : data.online
+                  ? "Gateway phone online"
+                  : "Gateway phone offline"}
           </div>
           <p className="text-sm text-muted-foreground">
             Codes sent today: <b className="text-foreground tabular">{data.sentToday}</b>
-            {data.provider === "android-gateway" && ` of about ${DAILY_FREE} free SMS on a typical prepaid plan`}
+            {data.provider !== "console" &&
+              (data.channel === "email" ? ` of about ${DAILY_FREE.email} free emails a day on Gmail` : ` of about ${DAILY_FREE.sms} free SMS on a typical prepaid plan`)}
           </p>
         </>
       )}

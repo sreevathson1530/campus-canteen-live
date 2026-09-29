@@ -39,7 +39,7 @@ async function main() {
   httpServer.listen(port, hostname, () => {
     console.log(`> Campus Canteen Live ready on http://localhost:${port} (${dev ? "dev" : "production"})`);
     if (hostname === "0.0.0.0") console.log(`> Phones on the same Wi-Fi: ${cfg.NEXT_PUBLIC_APP_URL}`);
-    console.log(`> SMS provider: ${cfg.SMS_PROVIDER}${cfg.OTP_DEV_CODE ? ` (dev code ${cfg.OTP_DEV_CODE} accepted)` : ""}`);
+    console.log(`> Order codes: ${cfg.OTP_CHANNEL === "sms" ? `SMS via ${cfg.SMS_PROVIDER}` : `email via ${cfg.EMAIL_PROVIDER}`}${cfg.OTP_DEV_CODE ? ` (dev code ${cfg.OTP_DEV_CODE} accepted)` : ""}`);
   });
 
   let shuttingDown = false;

@@ -18,7 +18,8 @@ describe("OTP", () => {
   it("masks the phone and blocks a resend within 30 s", async () => {
     const s = await makeStudent();
     const r = await sendOtp(s.id, "ip1");
-    expect(r.maskedPhone).toBe(`••••• •${s.phone!.slice(-4)}`);
+    expect(r.channel).toBe("email");
+    expect(r.maskedTo).toMatch(/^s•••••.@t\.test$/);
     expect(await codeOf(sendOtp(s.id, "ip1"))).toBe("RATE_LIMITED");
   });
 

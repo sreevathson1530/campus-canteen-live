@@ -2,7 +2,9 @@ import { createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto
 import { prisma, type Tx } from "../db";
 import { apiError } from "../api";
 import { allow } from "../rate-limit";
-import { getSmsSender } from "../sms";
+import { getOtpDelivery, maskPhone, type OtpChannel } from "./delivery";
+
+export { maskPhone };
 
 export const CODE_TTL_MS = 5 * 60_000;
 export const TOKEN_TTL_MS = 10 * 60_000;
@@ -26,10 +28,6 @@ function sameHash(a: string, b: string): boolean {
   return x.length === y.length && timingSafeEqual(x, y);
 }
 
-export function maskPhone(phone: string): string {
-  return `••••• •${phone.slice(-4)}`;
-}
-
 /** Dev/test only: OTP_DEV_CODE is accepted for any challenge. Never in production. */
 function devCode(): string | null {
   if (process.env.NODE_ENV === "production") return null;
@@ -39,13 +37,18 @@ function devCode(): string | null {
 export interface SendResult {
   expiresAt: string;
   resendAt: string;
-  maskedPhone: string;
+  channel: OtpChannel;
+  /** Where the code went, masked: "s•••••n@gmail.com" or "+91 ••••• •4821". */
+  maskedTo: string;
 }
 
 export async function sendOtp(userId: string, ip: string): Promise<SendResult> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true } });
-  if (!user?.phone) apiError("VALIDATION_ERROR", "Add a mobile number to your account first");
-  const phone = user.phone;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, email: true, name: true } });
+  if (!user) apiError("UNAUTHORIZED", "Sign in again");
+  const delivery = getOtpDelivery();
+  if (delivery.channel === "sms" && !user.phone) apiError("VALIDATION_ERROR", "Add a mobile number to your account first");
+  // Hourly limits are per phone number (one account per phone), falling back to the email.
+  const phone = user.phone ?? user.email;
   const now = Date.now();
 
   const last = await prisma.otpChallenge.findFirst({ where: { userId }, orderBy: { createdAt: "desc" } });
@@ -63,9 +66,9 @@ export async function sendOtp(userId: string, ip: string): Promise<SendResult> {
   });
 
   try {
-    await getSmsSender().send(phone, `${code} is your Campus Canteen order code. Valid for 5 minutes. Do not share it.`);
+    await delivery.send(user, code);
   } catch (err) {
-    console.error("[otp] SMS send failed", err);
+    console.error(`[otp] ${delivery.channel} send failed`, err instanceof Error ? err.message : err);
     // Don't count a failed send against the cooldown or hourly limit.
     await prisma.otpChallenge.delete({ where: { id: challenge.id } });
     apiError("SMS_SEND_FAILED", "Couldn't send the code. Try again, or ask at the counter.");
@@ -74,7 +77,8 @@ export async function sendOtp(userId: string, ip: string): Promise<SendResult> {
   return {
     expiresAt: challenge.expiresAt.toISOString(),
     resendAt: new Date(now + RESEND_COOLDOWN_MS).toISOString(),
-    maskedPhone: maskPhone(phone),
+    channel: delivery.channel,
+    maskedTo: delivery.maskedTo(user),
   };
 }
 
@@ -120,13 +124,14 @@ export async function consumeOtpToken(tx: Tx, userId: string, otpToken: string):
   return tokenHash;
 }
 
-export async function smsStatus() {
-  const sender = getSmsSender();
+/** Admin settings: which channel and provider send codes, whether it works, and today's count. */
+export async function codeDeliveryStatus() {
+  const sender = getOtpDelivery();
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
   const [online, sentToday] = await Promise.all([
     sender.health(),
     prisma.otpChallenge.count({ where: { createdAt: { gte: startOfDay } } }),
   ]);
-  return { provider: sender.name, online, sentToday };
+  return { channel: sender.channel, provider: sender.provider, online, sentToday };
 }
