@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Clock3, Search, ShoppingBag, Store, X } from "lucide-react";
+import { ChevronRight, Clock3, Flame, Search, ShieldCheck, ShoppingBag, Store, Wallet, X } from "lucide-react";
 import { useLiveMenu } from "@/hooks/useLiveMenu";
 import { usePulse } from "@/hooks/usePulse";
 import type { MenuItemDTO } from "@/lib/realtime/events";
@@ -100,7 +100,7 @@ export function MenuScreen({ firstName }: { firstName: string }) {
         setActiveCat(id);
         tabRefs.current.get(id)?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
       },
-      { rootMargin: "-130px 0px -60% 0px" },
+      { rootMargin: "-170px 0px -55% 0px" },
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
@@ -113,26 +113,52 @@ export function MenuScreen({ firstName }: { firstName: string }) {
   }
 
   const shownCat = activeCat ?? sections[0]?.id ?? null;
+  const bannerItem = data?.items.find((i) => i.imageUrl?.includes("margherita")) ?? data?.items.find((i) => i.imageUrl);
 
   return (
     <div className="pb-24">
       {/* Banner */}
-      <section className="relative -mx-4 -mt-4 overflow-hidden bg-brand px-4 py-5 text-white sm:mx-0 sm:mt-0 sm:rounded-2xl sm:px-8 sm:py-8">
-        <p className="text-sm text-white/85">Hi {firstName}</p>
-        <h1 className="mt-0.5 text-2xl leading-tight font-bold sm:text-3xl">What would you like today?</h1>
-        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
-          {isOpen ? (
-            <>
-              <Clock3 className="size-4" /> Pickup in about {pulse?.waitMinutes ?? settings?.minutesPerOrder ?? 5} min
-              {pulse && pulse.queueLength > 0 && ` · ${pulse.queueLength} ahead`}
-            </>
-          ) : (
-            <>
-              <Store className="size-4" /> Closed right now
-            </>
-          )}
-        </p>
+      <section className="relative -mx-4 -mt-4 overflow-hidden bg-gradient-to-br from-brand to-brand-dark px-4 pt-5 pb-6 text-white sm:mx-0 sm:mt-0 sm:rounded-2xl sm:px-8 sm:py-9">
+        {bannerItem && (
+          <DishImage
+            name=""
+            src={bannerItem.imageUrl}
+            priority
+            className="absolute -right-10 -bottom-10 size-40 rounded-full border-4 border-white/25 shadow-2xl sm:top-1/2 sm:right-8 sm:bottom-auto sm:size-56 sm:-translate-y-1/2"
+          />
+        )}
+        <div className="relative max-w-[70%] sm:max-w-md">
+          <p className="text-sm text-white/85">Hi {firstName}</p>
+          <h1 className="mt-0.5 text-2xl leading-tight font-bold sm:text-4xl">What would you like today?</h1>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur">
+            {isOpen ? (
+              <>
+                <Clock3 className="size-4" /> Ready in about {pulse?.waitMinutes ?? settings?.minutesPerOrder ?? 5} min
+              </>
+            ) : (
+              <>
+                <Store className="size-4" /> Closed right now
+              </>
+            )}
+          </p>
+        </div>
       </section>
+
+      {/* Highlights */}
+      <ul className="-mx-4 flex gap-2 overflow-x-auto bg-card px-4 py-3 text-xs font-semibold text-muted-foreground [scrollbar-width:none] sm:mx-0 sm:mt-3 sm:justify-center sm:gap-8 sm:rounded-xl sm:border sm:text-sm">
+        {[
+          [Flame, "Freshly made to order"],
+          [ShieldCheck, "Order confirmed by code"],
+          [Wallet, "Pay at the counter"],
+        ].map(([Icon, text]) => {
+          const I = Icon as typeof Flame;
+          return (
+            <li key={text as string} className="flex shrink-0 items-center gap-1.5">
+              <I className="size-4 text-brand" /> {text as string}
+            </li>
+          );
+        })}
+      </ul>
 
       {!isOpen && (
         <div role="status" className="mt-3 rounded-xl border border-chili/30 bg-chili-soft p-3 text-sm text-chili">
@@ -173,33 +199,43 @@ export function MenuScreen({ firstName }: { firstName: string }) {
       {/* Category strip */}
       <nav
         aria-label="Categories"
-        className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-20 -mx-4 mt-3 border-b bg-card px-4 shadow-[0_1px_0_rgba(0,0,0,.02)] sm:mx-0 sm:rounded-lg sm:border"
+        className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-20 -mx-4 mt-3 border-b bg-card/95 px-2 backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:px-3"
       >
-        <ul className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
+        <ul className="flex gap-1 overflow-x-auto [scrollbar-width:none] sm:justify-center sm:gap-3">
           {isLoading
-            ? Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="my-3 h-5 w-20 shrink-0 rounded" />)
-            : sections.map((c) => (
-                <li
-                  key={c.id}
-                  className="shrink-0"
-                  ref={(el) => {
-                    if (el) tabRefs.current.set(c.id, el);
-                    else tabRefs.current.delete(c.id);
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => sectionRefs.current.get(c.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                    aria-current={shownCat === c.id ? "true" : undefined}
-                    className={cn(
-                      "border-b-2 px-3 py-3 text-sm font-semibold whitespace-nowrap transition-colors",
-                      shownCat === c.id ? "border-brand text-brand" : "border-transparent text-muted-foreground hover:text-foreground",
-                    )}
+            ? Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="m-2 size-14 shrink-0 rounded-full" />)
+            : sections.map((c) => {
+                const on = shownCat === c.id;
+                return (
+                  <li
+                    key={c.id}
+                    className="shrink-0"
+                    ref={(el) => {
+                      if (el) tabRefs.current.set(c.id, el);
+                      else tabRefs.current.delete(c.id);
+                    }}
                   >
-                    {c.name}
-                  </button>
-                </li>
-              ))}
+                    <button
+                      type="button"
+                      onClick={() => sectionRefs.current.get(c.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                      aria-current={on ? "true" : undefined}
+                      className="group flex w-[4.75rem] flex-col items-center gap-1 px-1 pt-2.5 pb-2"
+                    >
+                      <DishImage
+                        name={c.name}
+                        src={c.items[0]?.imageUrl ?? null}
+                        className={cn(
+                          "size-12 rounded-full ring-2 ring-offset-2 ring-offset-card transition",
+                          on ? "ring-brand" : "ring-transparent group-hover:ring-border",
+                        )}
+                      />
+                      <span className={cn("line-clamp-1 text-[11px] leading-tight font-semibold", on ? "text-brand" : "text-muted-foreground")}>
+                        {c.name.replace(" & ", " · ").split(" · ")[0]}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
         </ul>
       </nav>
 
@@ -223,7 +259,8 @@ export function MenuScreen({ firstName }: { firstName: string }) {
       {/* Bestsellers */}
       {!narrowing && popular.length > 0 && (
         <section aria-labelledby="pop-h" className="mt-6">
-          <h2 id="pop-h" className="text-lg font-bold">
+          <h2 id="pop-h" className="flex items-center gap-2 text-lg font-bold">
+            <span aria-hidden className="h-5 w-1 rounded-full bg-brand" />
             Bestsellers
           </h2>
           <ul className="relative -mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:px-0">
@@ -288,12 +325,13 @@ export function MenuScreen({ firstName }: { firstName: string }) {
             if (el) sectionRefs.current.set(c.id, el);
             else sectionRefs.current.delete(c.id);
           }}
-          className="scroll-mt-32 pt-7"
+          className="scroll-mt-40 pt-7"
           aria-labelledby={`h-${c.id}`}
         >
-          <h2 id={`h-${c.id}`} className="flex items-baseline gap-2 text-lg font-bold">
+          <h2 id={`h-${c.id}`} className="flex items-center gap-2 text-lg font-bold">
+            <span aria-hidden className="h-5 w-1 rounded-full bg-brand" />
             {c.name}
-            <span className="text-sm font-medium text-muted-foreground">{c.items.length}</span>
+            <span className="text-sm font-medium text-muted-foreground">{c.items.length} items</span>
           </h2>
           <div className="-mx-4 mt-3 divide-y border-y bg-card sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:divide-y-0 sm:border-0 sm:bg-transparent lg:grid-cols-4 [&>article]:pb-7 sm:[&>article]:pb-0">
             {c.items.map((item, ii) => (
@@ -326,16 +364,24 @@ export function MenuScreen({ firstName }: { firstName: string }) {
             type="button"
             onClick={() => setCartOpen(true)}
             className={cn(
-              "mx-auto flex w-full max-w-lg items-center gap-3 rounded-xl px-4 py-3 text-left text-white shadow-lg",
+              "mx-auto flex w-full max-w-lg animate-rise items-center gap-3 rounded-xl px-3 py-2.5 text-left text-white shadow-xl shadow-black/20",
               blocked || !isOpen ? "bg-foreground" : "bg-brand",
             )}
           >
-            <ShoppingBag className="size-5" />
-            <span className="flex-1 text-sm font-semibold">
-              {count} {count === 1 ? "item" : "items"} · <span className="tabular">{formatRupees(totalPaise)}</span>
-              {blocked ? " · check cart" : ""}
+            <span className="relative grid size-9 place-items-center rounded-lg bg-white/15">
+              <ShoppingBag className="size-5" />
+              <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-white text-[11px] font-bold text-brand">{count}</span>
             </span>
-            <span className="text-sm font-bold">View cart →</span>
+            <span className="flex-1 leading-tight">
+              <span className="block text-xs text-white/80">
+                {count} {count === 1 ? "item" : "items"}
+                {blocked ? " · check cart" : ""}
+              </span>
+              <span className="block text-base font-bold tabular">{formatRupees(totalPaise)}</span>
+            </span>
+            <span className="inline-flex items-center gap-0.5 text-sm font-bold">
+              View cart <ChevronRight className="size-4" />
+            </span>
           </button>
         </div>
       )}

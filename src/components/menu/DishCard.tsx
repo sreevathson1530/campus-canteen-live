@@ -43,7 +43,7 @@ export function AddControl({
       disabled={!canOrder}
       aria-label={`Add ${item.name}`}
       className={cn(
-        "h-9 rounded-lg border border-brand bg-card px-5 text-sm font-bold tracking-wide text-brand shadow-sm transition hover:bg-brand-soft active:scale-95 disabled:border-border disabled:text-muted-foreground",
+        "h-9 rounded-lg border border-brand bg-card px-5 text-sm font-bold tracking-wide text-brand shadow-sm transition hover:bg-brand hover:text-white active:scale-95 disabled:border-border disabled:text-muted-foreground disabled:hover:bg-card",
         className,
       )}
     >
@@ -79,14 +79,14 @@ export function DishCard({
   return (
     <article
       className={cn(
-        "flex gap-3 bg-card p-4 sm:flex-col sm:gap-0 sm:overflow-hidden sm:rounded-xl sm:border sm:p-0 sm:shadow-sm",
+        "group/card flex gap-3 bg-card p-4 transition sm:flex-col sm:gap-0 sm:overflow-hidden sm:rounded-2xl sm:border sm:p-0 sm:shadow-sm sm:hover:-translate-y-0.5 sm:hover:shadow-lg",
         soldOut && "opacity-60",
       )}
     >
       {/* Photo + ADD (right on phones, top on larger screens) */}
       <div className="relative order-2 w-[7.5rem] shrink-0 sm:order-1 sm:w-full">
-        <button type="button" onClick={onOpen} className="block w-full" aria-label={`${item.name}, view details`}>
-          <DishImage name={item.name} src={item.imageUrl} priority={priority} className="aspect-square w-full rounded-xl sm:aspect-[4/3] sm:rounded-none" />
+        <button type="button" onClick={onOpen} className="block w-full overflow-hidden rounded-xl sm:rounded-none" aria-label={`${item.name}, view details`}>
+          <DishImage name={item.name} src={item.imageUrl} priority={priority} className="aspect-square w-full transition duration-500 sm:aspect-[4/3] sm:group-hover/card:scale-105" />
         </button>
         <AddControl
           item={item}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { ArrowRight, BellRing, Clock3, MapPin, ReceiptText, ShieldCheck, UtensilsCrossed } from "lucide-react";
+import { ArrowRight, BellRing, Clock3, Flame, MapPin, ReceiptText, ShieldCheck, Timer, UtensilsCrossed, Wallet } from "lucide-react";
 import type { MenuSnapshot } from "@/lib/menu/service";
 import type { MenuItemDTO } from "@/lib/realtime/events";
 import type { Pulse } from "@/lib/pulse";
@@ -13,6 +13,12 @@ import { Wordmark } from "@/components/shared/Brand";
 import { InstallApp } from "@/components/shared/InstallApp";
 import { DishImage } from "@/components/menu/DishImage";
 import { VegMark } from "@/components/menu/VegMark";
+
+const PERKS = [
+  { icon: Timer, title: "No queue", body: "Order ahead and walk straight to the counter." },
+  { icon: Flame, title: "Made fresh", body: "Cooking starts only after you order." },
+  { icon: Wallet, title: "Pay at pickup", body: "Cash or UPI when you collect. No online payment." },
+];
 
 const STEPS = [
   { icon: UtensilsCrossed, title: "Choose your food", body: "Browse the menu and add dishes to your cart." },
@@ -56,8 +62,8 @@ export function HomeScreen({ menu, initialPulse, firstName }: { menu: MenuSnapsh
       </header>
 
       {/* Hero */}
-      <section className="bg-brand text-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 pt-6 pb-10 sm:px-6 md:grid-cols-2 md:gap-10 md:py-14">
+      <section className="bg-gradient-to-br from-brand to-brand-dark text-white">
+        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 pt-6 pb-16 sm:px-6 md:grid-cols-2 md:gap-10 md:pt-14 md:pb-24">
           <div>
             <p role="status" className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
               <span className={cn("size-2 rounded-full", pulse.isOpen ? "bg-[#4ade80]" : "bg-white/60")} />
@@ -86,6 +92,21 @@ export function HomeScreen({ menu, initialPulse, firstName }: { menu: MenuSnapsh
       </section>
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6">
+        {/* Perks: cards that overlap the hero */}
+        <ul className="relative -mt-9 grid gap-3 sm:grid-cols-3 md:-mt-12">
+          {PERKS.map((p) => (
+            <li key={p.title} className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-md shadow-black/5">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+                <p.icon className="size-5" />
+              </span>
+              <div>
+                <p className="font-semibold">{p.title}</p>
+                <p className="text-sm text-muted-foreground">{p.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+
         {/* Categories */}
         <section className="py-10" aria-labelledby="cats-h">
           <h2 id="cats-h" className="text-2xl font-bold">
@@ -98,7 +119,7 @@ export function HomeScreen({ menu, initialPulse, firstName }: { menu: MenuSnapsh
                   <DishImage
                     name={c.name}
                     src={c.items[0]?.imageUrl ?? null}
-                    className="aspect-square w-full rounded-full border-2 border-transparent shadow-sm transition group-hover:border-brand"
+                    className="aspect-square w-full rounded-full shadow-md ring-2 ring-transparent ring-offset-2 transition group-hover:scale-105 group-hover:ring-brand"
                   />
                   <p className="mt-2 text-sm leading-tight font-semibold group-hover:text-brand">{c.name}</p>
                 </Link>
@@ -120,9 +141,9 @@ export function HomeScreen({ menu, initialPulse, firstName }: { menu: MenuSnapsh
             </div>
             <ul className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
               {popular.map((item) => (
-                <li key={item.id} className="overflow-hidden rounded-xl border bg-card shadow-sm transition hover:shadow-md">
+                <li key={item.id} className="group overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
                   <Link href={orderHref} className="block">
-                    <DishImage name={item.name} src={item.imageUrl} className="aspect-[4/3] w-full" />
+                    <div className="overflow-hidden"><DishImage name={item.name} src={item.imageUrl} className="aspect-[4/3] w-full transition duration-500 group-hover:scale-105" /></div>
                     <div className="p-3">
                       <p className="flex items-center gap-1.5 text-sm font-semibold">
                         <VegMark isVeg={item.isVeg} />
@@ -144,17 +165,26 @@ export function HomeScreen({ menu, initialPulse, firstName }: { menu: MenuSnapsh
           </h2>
           <ol className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((s, i) => (
-              <li key={s.title} className="rounded-xl border bg-card p-5">
-                <span className="grid size-10 place-items-center rounded-full bg-brand-soft text-brand">
+              <li key={s.title} className="relative rounded-2xl border bg-card p-5">
+                <span className="absolute top-4 right-4 grid size-7 place-items-center rounded-full bg-brand text-xs font-bold text-white">{i + 1}</span>
+                <span className="grid size-11 place-items-center rounded-full bg-brand-soft text-brand">
                   <s.icon className="size-5" />
                 </span>
-                <h3 className="mt-3 font-semibold">
-                  {i + 1}. {s.title}
-                </h3>
+                <h3 className="mt-3 font-semibold">{s.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{s.body}</p>
               </li>
             ))}
           </ol>
+        </section>
+        {/* Call to action */}
+        <section className="mb-10 flex flex-col items-start gap-4 rounded-2xl bg-gradient-to-br from-brand to-brand-dark p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <h2 className="text-2xl font-bold">Hungry? Your order is a few taps away.</h2>
+            <p className="mt-1 text-white/85">{pulse.isOpen ? `Ready in about ${pulse.waitMinutes} minutes.` : "We open again soon."}</p>
+          </div>
+          <Link href={orderHref} className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-white px-6 py-3 font-bold text-brand hover:bg-white/90">
+            Order now <ArrowRight className="size-4" />
+          </Link>
         </section>
       </main>
 
