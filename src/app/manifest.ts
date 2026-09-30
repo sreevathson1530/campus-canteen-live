@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 /** Makes the site installable: "Add to Home screen" opens it full-screen with its own icon. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Campus Canteen",
-    short_name: "Canteen",
+    name: "QuickCanteen",
+    short_name: "QuickCanteen",
     description: "Order pizzas, burgers and coffee from your phone and pick up with your token.",
     start_url: "/",
     scope: "/",

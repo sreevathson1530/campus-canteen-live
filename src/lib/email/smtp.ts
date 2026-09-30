@@ -19,7 +19,7 @@ export function smtpEmailSender(): EmailSender {
       greetingTimeout: 10_000,
       socketTimeout: 15_000,
     });
-  const from = process.env.EMAIL_FROM || `"Campus Canteen" <${user}>`;
+  const from = process.env.EMAIL_FROM || `"QuickCanteen" <${user}>`;
 
   return {
     name: "smtp",

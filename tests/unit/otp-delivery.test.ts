@@ -12,7 +12,7 @@ describe("otp delivery", () => {
 
   it("puts the code in the subject and body, and escapes the name", () => {
     const m = otpEmail("0421", "<Asha>");
-    expect(m.subject).toBe("0421 is your Campus Canteen order code");
+    expect(m.subject).toBe("0421 is your QuickCanteen order code");
     expect(m.text).toContain("0421");
     expect(m.html).toContain("0421");
     expect(m.html).toContain("&lt;Asha&gt;");

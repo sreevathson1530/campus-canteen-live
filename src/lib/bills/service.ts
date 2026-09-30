@@ -88,7 +88,7 @@ export async function getBillForViewer(orderId: string, viewer: { id: string; ro
   const bill = await loadBill({ orderId });
   if (!bill) apiError("NOT_FOUND", "The bill is created when the order is collected");
   const settings = await prisma.settings.findUnique({ where: { id: 1 } });
-  return toBillDTO(bill, settings?.canteenName ?? "Campus Canteen", viewer.role === "STAFF");
+  return toBillDTO(bill, settings?.canteenName ?? "QuickCanteen", viewer.role === "STAFF");
 }
 
 export async function searchBills(opts: { q?: string; date?: string; page?: number; pageSize?: number }) {
@@ -121,6 +121,6 @@ export async function searchBills(opts: { q?: string; date?: string; page?: numb
     }),
     prisma.settings.findUnique({ where: { id: 1 } }),
   ]);
-  const name = settings?.canteenName ?? "Campus Canteen";
+  const name = settings?.canteenName ?? "QuickCanteen";
   return { total, page, pageSize, bills: rows.map((b) => toBillDTO(b, name, false)) };
 }

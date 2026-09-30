@@ -78,7 +78,7 @@ export function KitchenBoard() {
   useEffect(() => {
     document.title = newCount > 0 ? `(${newCount}) New · Kitchen` : "Kitchen · Canteen";
     return () => {
-      document.title = "Campus Canteen Live";
+      document.title = "QuickCanteen";
     };
   }, [newCount]);
 

@@ -67,7 +67,7 @@ export async function sendBillEmail(orderId: string, { force = false } = {}): Pr
   const to = bill.order.user.email;
   if (bill.emailedAt && !force) return { to, emailedAt: bill.emailedAt.toISOString() };
   const settings = await prisma.settings.findUnique({ where: { id: 1 } });
-  await getEmailSender().send({ to, ...billEmail(bill, settings?.canteenName ?? "Campus Canteen") });
+  await getEmailSender().send({ to, ...billEmail(bill, settings?.canteenName ?? "QuickCanteen") });
   const emailedAt = new Date();
   await prisma.bill.update({ where: { orderId }, data: { emailedAt } });
   return { to, emailedAt: emailedAt.toISOString() };

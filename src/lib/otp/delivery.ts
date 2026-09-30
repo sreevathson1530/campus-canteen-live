@@ -22,8 +22,8 @@ export function maskEmail(email: string): string {
 }
 
 export function otpEmail(code: string, firstName: string) {
-  const subject = `${code} is your Campus Canteen order code`;
-  const text = `${code} is your Campus Canteen order code. Valid for 5 minutes. Do not share it.\n\nIf you didn't try to place an order, you can ignore this email.`;
+  const subject = `${code} is your QuickCanteen order code`;
+  const text = `${code} is your QuickCanteen order code. Valid for 5 minutes. Do not share it.\n\nIf you didn't try to place an order, you can ignore this email.`;
   const html = `<!doctype html><html><body style="margin:0;background:#faf6ee;font-family:Arial,Helvetica,sans-serif;color:#1b1a17">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:420px;background:#ffffff;border:1px solid #e1d8c6;border-radius:20px;overflow:hidden">
@@ -59,7 +59,7 @@ export function getOtpDelivery(): OtpDelivery {
       channel: "sms",
       provider: sms.name,
       maskedTo: (u) => `+91 ${maskPhone(u.phone ?? "")}`,
-      send: (u, code) => sms.send(u.phone!, `${code} is your Campus Canteen order code. Valid for 5 minutes. Do not share it.`),
+      send: (u, code) => sms.send(u.phone!, `${code} is your QuickCanteen order code. Valid for 5 minutes. Do not share it.`),
       health: () => sms.health(),
     };
   }

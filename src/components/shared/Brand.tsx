@@ -20,7 +20,7 @@ export function Wordmark({ className, onBrand = false }: { className?: string; o
       >
         C
       </span>
-      <span>Campus Canteen</span>
+      <span>QuickCanteen</span>
     </span>
   );
 }
