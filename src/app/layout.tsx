@@ -8,9 +8,10 @@ const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree", displa
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Campus Canteen Live", template: "%s · Canteen" },
+  title: { default: "Campus Canteen", template: "%s · Campus Canteen" },
   description: "Order ahead, verify with a code, and watch your food go from kitchen to counter live.",
-  applicationName: "Campus Canteen Live",
+  applicationName: "Campus Canteen",
+  appleWebApp: { capable: true, title: "Canteen", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

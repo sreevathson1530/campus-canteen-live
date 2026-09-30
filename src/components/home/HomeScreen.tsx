@@ -10,6 +10,7 @@ import { usePulse } from "@/hooks/usePulse";
 import { formatRupees } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/shared/Brand";
+import { InstallApp } from "@/components/shared/InstallApp";
 import { DishImage } from "@/components/menu/DishImage";
 import { VegMark } from "@/components/menu/VegMark";
 
@@ -77,6 +78,7 @@ export function HomeScreen({ menu, initialPulse, firstName }: { menu: MenuSnapsh
                   Sign in
                 </Link>
               )}
+              <InstallApp />
             </div>
           </div>
           {hero && <DishImage name={hero.name} src={hero.imageUrl} priority className="aspect-[4/3] w-full rounded-2xl shadow-xl ring-4 ring-white/15" />}
