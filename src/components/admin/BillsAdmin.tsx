@@ -36,7 +36,7 @@ export function BillsAdmin() {
 
   return (
     <div className="grid gap-4 pb-6">
-      <h1 className="font-display text-3xl font-extrabold">Bills</h1>
+      <h1 className="text-2xl font-semibold">Bills</h1>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -64,9 +64,9 @@ export function BillsAdmin() {
       </div>
 
       {isLoading ? (
-        <Skeleton className="h-64 rounded-3xl" />
+        <Skeleton className="h-64 rounded-2xl" />
       ) : data && data.bills.length === 0 ? (
-        <div className="grid place-items-center gap-2 rounded-3xl border border-dashed p-10 text-center text-muted-foreground">
+        <div className="grid place-items-center gap-2 rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
           <Receipt className="size-8" />
           No bills yet. A bill is created when an order is collected.
         </div>
@@ -75,14 +75,14 @@ export function BillsAdmin() {
           {data?.bills.map((b) => (
             <li key={b.billNumber}>
               <button type="button" onClick={() => setOpen(b)} className="flex w-full items-center gap-3 rounded-2xl border bg-card p-3 text-left hover:bg-muted/60">
-                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-secondary font-display text-lg font-extrabold tabular">{b.tokenNumber}</span>
+                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-secondary text-base font-semibold tabular">{b.tokenNumber}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-bold">{b.studentName}</span>
                   <span className="block truncate text-xs text-muted-foreground">
                     {b.billNumber} · {formatDateTime(b.collectedAt)}
                   </span>
                 </span>
-                <span className="font-display text-lg font-extrabold tabular">{formatRupees(b.totalPaise)}</span>
+                <span className="text-base font-semibold tabular">{formatRupees(b.totalPaise)}</span>
               </button>
             </li>
           ))}

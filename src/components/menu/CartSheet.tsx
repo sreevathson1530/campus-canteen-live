@@ -115,11 +115,11 @@ export function CartSheet({
 
   return (
     <Drawer open={open} onOpenChange={handleOpenChange}>
-      <DrawerContent className="mx-auto max-h-[92dvh] max-w-lg rounded-t-[1.75rem]">
+      <DrawerContent className="mx-auto max-h-[92dvh] max-w-lg rounded-t-2xl">
         {step === "cart" ? (
           <>
             <DrawerHeader className="text-left">
-              <DrawerTitle className="font-display text-2xl font-extrabold">Your cart</DrawerTitle>
+              <DrawerTitle className="text-xl font-semibold">Your cart</DrawerTitle>
               <DrawerDescription>Pay by cash or UPI when you collect.</DrawerDescription>
             </DrawerHeader>
             <div className="grid gap-3 overflow-y-auto px-5 pb-2">
@@ -181,7 +181,7 @@ export function CartSheet({
             <div className="grid gap-2 border-t px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
               <div className="flex items-baseline justify-between">
                 <span className="font-semibold text-muted-foreground">Total</span>
-                <span className="font-display text-2xl font-extrabold tabular">{formatRupees(totalPaise)}</span>
+                <span className="text-xl font-semibold tabular">{formatRupees(totalPaise)}</span>
               </div>
               {!isOpen && (
                 <p className="rounded-xl bg-chili-soft px-3 py-2 text-sm font-medium text-chili">

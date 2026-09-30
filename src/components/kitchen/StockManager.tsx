@@ -45,7 +45,7 @@ function useAutosave<T>(save: (v: T) => Promise<void>) {
 
 function SaveDot({ state }: { state: SaveState }) {
   if (state === "saving") return <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label="Saving" />;
-  if (state === "saved") return <Check className="size-4 text-leaf" aria-label="Saved" />;
+  if (state === "saved") return <Check className="size-4 text-brand" aria-label="Saved" />;
   return <span className="size-4" />;
 }
 
@@ -120,11 +120,11 @@ function CanteenStatusCard({ isOpen, closedMessage }: { isOpen: boolean; closedM
     schedule({ isOpen: v, closedMessage: msg || null });
   }
   return (
-    <section className={cn("rounded-3xl border p-4", isOpen ? "bg-leaf-soft" : "bg-chili-soft")}>
+    <section className={cn("rounded-2xl border p-4", isOpen ? "bg-leaf-soft" : "bg-chili-soft")}>
       <div className="flex items-center gap-3">
-        <Store className={cn("size-6", isOpen ? "text-leaf" : "text-chili")} />
+        <Store className={cn("size-6", isOpen ? "text-brand" : "text-chili")} />
         <div className="flex-1">
-          <p className="font-display text-xl font-extrabold">{isOpen ? "Canteen is open" : "Canteen is closed"}</p>
+          <p className="text-lg font-semibold">{isOpen ? "Canteen is open" : "Canteen is closed"}</p>
           <p className="text-sm text-muted-foreground">{isOpen ? "Students can order." : "Ordering is paused; orders in progress continue."}</p>
         </div>
         <SaveDot state={state} />
@@ -149,7 +149,7 @@ export function StockManager() {
   if (isLoading || !data) {
     return (
       <div className="grid gap-3">
-        <Skeleton className="h-32 rounded-3xl" />
+        <Skeleton className="h-32 rounded-2xl" />
         {Array.from({ length: 6 }, (_, i) => (
           <Skeleton key={i} className="h-16 rounded-2xl" />
         ))}
@@ -158,14 +158,14 @@ export function StockManager() {
   }
   return (
     <div className="grid gap-5 pb-6">
-      <h1 className="font-display text-3xl font-extrabold">Stock & status</h1>
+      <h1 className="text-2xl font-semibold">Stock & status</h1>
       <CanteenStatusCard isOpen={data.settings.isOpen} closedMessage={data.settings.closedMessage} />
       {data.categories.map((c) => {
         const items = data.items.filter((i) => i.categoryId === c.id);
         if (!items.length) return null;
         return (
           <section key={c.id} className="grid gap-2">
-            <h2 className="font-display text-lg font-extrabold">{c.name}</h2>
+            <h2 className="text-base font-semibold">{c.name}</h2>
             <ul className="grid gap-2">
               {items.map((i) => (
                 <StockRow key={i.id} item={i} />

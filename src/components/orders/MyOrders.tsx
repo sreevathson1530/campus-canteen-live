@@ -18,7 +18,7 @@ function OrderRow({ o, onAgain, againBusy }: { o: OrderDTO; onAgain?: () => void
   return (
     <div className="overflow-hidden rounded-2xl border bg-card">
       <Link href={`/orders/${o.id}`} className="flex items-center gap-3 p-3.5 transition-colors hover:bg-muted/60">
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-secondary font-display text-xl font-extrabold tabular">{o.tokenNumber}</span>
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-secondary text-lg font-semibold tabular">{o.tokenNumber}</span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-semibold">{o.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}</span>
           <span className="block text-xs text-muted-foreground">
@@ -33,7 +33,7 @@ function OrderRow({ o, onAgain, againBusy }: { o: OrderDTO; onAgain?: () => void
           type="button"
           onClick={onAgain}
           disabled={againBusy}
-          className="flex w-full items-center justify-center gap-2 border-t py-2.5 text-sm font-bold text-leaf transition-colors hover:bg-leaf-soft disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 border-t py-2.5 text-sm font-bold text-brand transition-colors hover:bg-brand-soft disabled:opacity-60"
         >
           <RotateCcw className="size-4" /> Order again
         </button>
@@ -56,7 +56,7 @@ export function MyOrders() {
 
   if (q.isLoading) {
     return (
-      <div className="grid gap-3">
+      <div className="mx-auto grid w-full max-w-2xl gap-3">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-20 rounded-2xl" />
         ))}
@@ -68,11 +68,11 @@ export function MyOrders() {
   const history = q.data?.pages.flatMap((p) => p.history) ?? [];
 
   return (
-    <div className="grid gap-6 pb-6">
-      <h1 className="font-display text-3xl font-extrabold">My orders</h1>
+    <div className="mx-auto grid w-full max-w-2xl gap-6 pb-6">
+      <h1 className="text-2xl font-semibold">My orders</h1>
 
       {active.length === 0 && history.length === 0 && (
-        <div className="grid place-items-center gap-3 rounded-3xl border border-dashed p-10 text-center">
+        <div className="grid place-items-center gap-3 rounded-2xl border border-dashed p-10 text-center">
           <UtensilsCrossed className="size-8 text-muted-foreground" />
           <p className="font-semibold">No orders yet</p>
           <Button asChild size="xl">

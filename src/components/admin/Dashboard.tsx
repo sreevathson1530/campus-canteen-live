@@ -37,7 +37,7 @@ function Tile({
   tone?: "leaf" | "turmeric" | "chili";
 }) {
   return (
-    <div className="rounded-3xl border bg-card p-4">
+    <div className="rounded-2xl border bg-card p-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
         <span
           className={cn(
@@ -51,7 +51,7 @@ function Tile({
         </span>
         {label}
       </div>
-      <p className="mt-2 font-display text-3xl font-extrabold tabular">{value}</p>
+      <p className="mt-2 text-2xl font-semibold tabular">{value}</p>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
@@ -111,7 +111,7 @@ export function Dashboard() {
     return (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }, (_, i) => (
-          <Skeleton key={i} className="h-28 rounded-3xl" />
+          <Skeleton key={i} className="h-28 rounded-2xl" />
         ))}
       </div>
     );
@@ -130,7 +130,7 @@ export function Dashboard() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-muted-foreground">Today, live</p>
-          <h1 className="font-display text-3xl font-extrabold">Dashboard</h1>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
         </div>
         <div className="flex gap-2 text-sm font-semibold" aria-label="Who's online">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5">
@@ -156,10 +156,10 @@ export function Dashboard() {
       </div>
 
       {lowStock.length > 0 && (
-        <section className="rounded-3xl border border-chili/30 bg-chili-soft/60 p-4" aria-labelledby="low-h">
+        <section className="rounded-2xl border border-chili/30 bg-chili-soft/60 p-4" aria-labelledby="low-h">
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-5 text-chili" />
-            <h2 id="low-h" className="mr-auto font-display text-lg font-extrabold">
+            <h2 id="low-h" className="mr-auto text-base font-semibold">
               Stock alerts
             </h2>
             <Link href="/kitchen/stock" className="text-sm font-semibold text-chili hover:underline">
@@ -184,9 +184,9 @@ export function Dashboard() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <section className="rounded-3xl border bg-card p-4">
+        <section className="rounded-2xl border bg-card p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-lg font-extrabold">Orders per hour</h2>
+            <h2 className="text-base font-semibold">Orders per hour</h2>
             <button type="button" className="text-sm font-semibold text-leaf" onClick={() => setShowTable((v) => !v)} aria-pressed={showTable}>
               {showTable ? "Show chart" : "Show table"}
             </button>
@@ -234,8 +234,8 @@ export function Dashboard() {
           <p className="mt-2 text-xs text-muted-foreground">Now: {hourLabel(nowHour)}. Later hours are faded.</p>
         </section>
 
-        <section className="rounded-3xl border bg-card p-4">
-          <h2 className="mb-3 font-display text-lg font-extrabold">Top items today</h2>
+        <section className="rounded-2xl border bg-card p-4">
+          <h2 className="mb-3 text-base font-semibold">Top items today</h2>
           {data.topItems.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">No orders yet today.</p>
           ) : (
@@ -265,15 +265,15 @@ export function Dashboard() {
 }
 
 function WeekTrend({ data }: { data: InsightsDTO | undefined }) {
-  if (!data) return <Skeleton className="h-72 rounded-3xl" />;
+  if (!data) return <Skeleton className="h-72 rounded-2xl" />;
   const today = data.days[data.days.length - 1]?.date;
   const rows = data.days.map((d) => ({ ...d, label: dayLabel(d.date, today), rupees: d.revenuePaise / 100 }));
   return (
     <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]" aria-label="Last 7 days">
-      <div className="rounded-3xl border bg-card p-4">
+      <div className="rounded-2xl border bg-card p-4">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="font-display text-lg font-extrabold">Revenue, last 7 days</h2>
-          <span className="font-display text-lg font-extrabold tabular">{formatRupees(data.weekRevenuePaise)}</span>
+          <h2 className="text-base font-semibold">Revenue, last 7 days</h2>
+          <span className="text-base font-semibold tabular">{formatRupees(data.weekRevenuePaise)}</span>
         </div>
         <div className="h-52 w-full" role="img" aria-label={`Revenue over the last 7 days, ${formatRupees(data.weekRevenuePaise)} in total.`}>
           <ResponsiveContainer>

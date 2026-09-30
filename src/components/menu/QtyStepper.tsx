@@ -1,6 +1,7 @@
 import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/** "− 2 +" control in the brand colour, the same shape as the ADD button it replaces. */
 export function QtyStepper({
   value,
   onChange,
@@ -16,16 +17,13 @@ export function QtyStepper({
   size?: "sm" | "md";
   disabledPlus?: boolean;
 }) {
-  const btn = cn(
-    "grid place-items-center rounded-full text-leaf transition active:scale-90 disabled:opacity-35",
-    size === "sm" ? "size-8" : "size-10",
-  );
+  const btn = cn("grid place-items-center text-white transition active:scale-90 disabled:opacity-40", size === "sm" ? "h-9 w-8" : "h-11 w-10");
   return (
-    <div className="inline-flex items-center gap-1 rounded-full bg-leaf-soft p-0.5" role="group" aria-label={`Quantity of ${label}`}>
+    <div className="inline-flex items-center rounded-lg bg-brand shadow-sm" role="group" aria-label={`Quantity of ${label}`}>
       <button type="button" className={btn} onClick={() => onChange(value - 1)} aria-label={`Remove one ${label}`}>
-        <Minus className="size-4" strokeWidth={2.6} />
+        <Minus className="size-4" strokeWidth={2.8} />
       </button>
-      <span className="min-w-5 text-center font-display text-base font-extrabold tabular" aria-live="polite">
+      <span className="min-w-6 text-center text-sm font-bold text-white tabular" aria-live="polite">
         {value}
       </span>
       <button
@@ -35,7 +33,7 @@ export function QtyStepper({
         disabled={value >= max || disabledPlus}
         aria-label={`Add one more ${label}`}
       >
-        <Plus className="size-4" strokeWidth={2.6} />
+        <Plus className="size-4" strokeWidth={2.8} />
       </button>
     </div>
   );

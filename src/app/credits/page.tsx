@@ -17,7 +17,7 @@ export default function CreditsPage() {
         </Link>
       </div>
       <div>
-        <h1 className="font-display text-3xl font-extrabold">Photo credits</h1>
+        <h1 className="text-2xl font-semibold">Photo credits</h1>
         <p className="mt-1 text-muted-foreground">
           Food photos are from Wikimedia Commons, used under their Creative Commons licences. They were cropped and re-encoded for
           the menu. The 3D dishes are original models made for this app.
@@ -36,7 +36,7 @@ export default function CreditsPage() {
                 </a>{" "}
                 by {c.author} ·{" "}
                 {c.licenseUrl ? (
-                  <a href={c.licenseUrl} target="_blank" rel="noopener noreferrer license" className="font-semibold text-leaf underline-offset-4 hover:underline">
+                  <a href={c.licenseUrl} target="_blank" rel="noopener noreferrer license" className="font-semibold text-brand underline-offset-4 hover:underline">
                     {c.license}
                   </a>
                 ) : (

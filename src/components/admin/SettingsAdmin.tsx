@@ -48,7 +48,7 @@ function SettingsForm({ initial }: { initial: SettingsDTO }) {
   }
 
   return (
-    <section className="grid gap-4 rounded-3xl border bg-card p-5">
+    <section className="grid gap-4 rounded-2xl border bg-card p-5">
       <Field label="Canteen name" name="canteenName" value={s.canteenName} onChange={(e) => setS({ ...s, canteenName: e.target.value })} />
       <div className="grid grid-cols-2 gap-3">
         <Field
@@ -95,10 +95,10 @@ function SmsStatus() {
   });
   const DAILY_FREE = { email: 500, sms: 100 };
   return (
-    <section className="grid gap-3 rounded-3xl border bg-card p-5">
+    <section className="grid gap-3 rounded-2xl border bg-card p-5">
       <div className="flex items-center gap-2">
         <MessageSquareText className="size-5 text-leaf" />
-        <h2 className="mr-auto font-display text-lg font-extrabold">Order codes</h2>
+        <h2 className="mr-auto text-base font-semibold">Order codes</h2>
         <Button variant="outline" className="h-9 rounded-full" onClick={() => refetch()} disabled={isFetching}>
           Check
         </Button>
@@ -134,8 +134,8 @@ export function SettingsAdmin() {
   const { data, isLoading } = useQuery({ queryKey: ["settings"], queryFn: () => api<{ settings: SettingsDTO }>("/api/settings") });
   return (
     <div className="grid gap-5 pb-6">
-      <h1 className="font-display text-3xl font-extrabold">Settings</h1>
-      {isLoading || !data ? <Skeleton className="h-96 rounded-3xl" /> : <SettingsForm initial={data.settings} />}
+      <h1 className="text-2xl font-semibold">Settings</h1>
+      {isLoading || !data ? <Skeleton className="h-96 rounded-2xl" /> : <SettingsForm initial={data.settings} />}
       <SmsStatus />
     </div>
   );

@@ -1,22 +1,22 @@
-import { Flame, Sparkles, Star, Timer } from "lucide-react";
+import { Flame, Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const TAG_META: Record<string, { label: string; className: string; icon: typeof Star }> = {
-  bestseller: { label: "Bestseller", className: "bg-turmeric text-[#3a2a05]", icon: Star },
-  new: { label: "New", className: "bg-leaf text-paper", icon: Sparkles },
-  "chef-special": { label: "Chef's special", className: "bg-chili text-white", icon: Flame },
+  bestseller: { label: "Bestseller", className: "text-[#b45309]", icon: Star },
+  new: { label: "New", className: "text-leaf", icon: Sparkles },
+  "chef-special": { label: "Chef's special", className: "text-brand", icon: Flame },
 };
 
 export const SPICE_LABELS = ["Not spicy", "Mild", "Medium", "Hot"] as const;
 
-/** The first known tag as a pill, or nothing. */
-export function TagBadge({ tags, className }: { tags: string[]; className?: string }) {
+/** The first known tag as small coloured text with an icon ("★ Bestseller"), or nothing. */
+export function TagLabel({ tags, className }: { tags: string[]; className?: string }) {
   const tag = tags.find((t) => TAG_META[t]);
   if (!tag) return null;
   const m = TAG_META[tag];
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm", m.className, className)}>
-      <m.icon className="size-3" strokeWidth={2.6} />
+    <span className={cn("inline-flex items-center gap-1 text-xs font-semibold", m.className, className)}>
+      <m.icon className="size-3 fill-current" />
       {m.label}
     </span>
   );
@@ -28,18 +28,10 @@ export function SpiceMeter({ level, className, withLabel = false }: { level: num
     <span className={cn("inline-flex items-center gap-1", className)}>
       <span aria-hidden className="inline-flex">
         {[1, 2, 3].map((n) => (
-          <Flame key={n} className={cn("size-3.5 -mx-px", n <= level ? "fill-chili text-chili" : "text-muted-foreground/35")} strokeWidth={2.2} />
+          <Flame key={n} className={cn("-mx-px size-3.5", n <= level ? "fill-chili text-chili" : "text-muted-foreground/35")} strokeWidth={2.2} />
         ))}
       </span>
       <span className={withLabel ? "text-xs font-semibold" : "sr-only"}>{SPICE_LABELS[level] ?? SPICE_LABELS[0]}</span>
-    </span>
-  );
-}
-
-export function PrepTime({ minutes, className }: { minutes: number; className?: string }) {
-  return (
-    <span className={cn("inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground", className)}>
-      <Timer className="size-3.5" /> {minutes} min
     </span>
   );
 }

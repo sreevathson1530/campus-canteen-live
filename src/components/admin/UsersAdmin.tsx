@@ -49,7 +49,7 @@ export function UsersAdmin({ selfId }: { selfId: string }) {
   return (
     <div className="grid gap-4 pb-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-extrabold">Users</h1>
+        <h1 className="text-2xl font-semibold">Users</h1>
         <Button size="xl" onClick={() => setOpen(true)}>
           <UserPlus /> Staff
         </Button>
@@ -59,7 +59,7 @@ export function UsersAdmin({ selfId }: { selfId: string }) {
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, roll number or phone" className="h-12 rounded-2xl pl-9" aria-label="Search users" />
       </div>
       {isLoading ? (
-        <Skeleton className="h-64 rounded-3xl" />
+        <Skeleton className="h-64 rounded-2xl" />
       ) : (
         <ul className="grid gap-2">
           {data?.users.map((u) => (
@@ -93,7 +93,7 @@ export function UsersAdmin({ selfId }: { selfId: string }) {
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent className="mx-auto max-w-lg">
           <DrawerHeader className="text-left">
-            <DrawerTitle className="font-display text-2xl font-extrabold">New staff account</DrawerTitle>
+            <DrawerTitle className="text-xl font-semibold">New staff account</DrawerTitle>
             <DrawerDescription>They sign in to the kitchen board with these details.</DrawerDescription>
           </DrawerHeader>
           <div className="grid gap-3 px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]">

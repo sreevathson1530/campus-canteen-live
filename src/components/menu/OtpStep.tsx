@@ -102,11 +102,11 @@ export function OtpStep({
   return (
     <div className="grid gap-4 px-5 pb-5">
       <div className="flex items-start gap-3">
-        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-leaf-soft text-leaf">
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand">
           <ShieldCheck className="size-6" />
         </span>
         <div>
-          <h3 className="font-display text-xl font-extrabold">Confirm it&apos;s you</h3>
+          <h3 className="text-lg font-semibold">Confirm it&apos;s you</h3>
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {sending && !sent ? "Sending a 4-digit code…" : sent ? <>
                 We sent a 4-digit code to <b className="text-foreground">{sent.maskedTo}</b>
@@ -134,7 +134,7 @@ export function OtpStep({
         >
           <InputOTPGroup className="gap-2.5">
             {[0, 1, 2, 3].map((i) => (
-              <InputOTPSlot key={i} index={i} className="size-14 rounded-2xl border text-2xl font-extrabold first:rounded-2xl last:rounded-2xl" />
+              <InputOTPSlot key={i} index={i} className="size-14 rounded-2xl border text-2xl font-bold first:rounded-2xl last:rounded-2xl" />
             ))}
           </InputOTPGroup>
         </InputOTP>
@@ -151,7 +151,7 @@ export function OtpStep({
         {resendIn > 0 ? (
           <>Resend in 0:{String(resendIn).padStart(2, "0")}</>
         ) : (
-          <button type="button" className="font-semibold text-leaf underline-offset-4 hover:underline disabled:opacity-50" onClick={send} disabled={sending}>
+          <button type="button" className="font-semibold text-brand underline-offset-4 hover:underline disabled:opacity-50" onClick={send} disabled={sending}>
             Resend code
           </button>
         )}
@@ -160,7 +160,7 @@ export function OtpStep({
       <Button size="xl" onClick={() => verify(code)} disabled={code.length !== 4 || working}>
         {working ? "Placing your order…" : `Verify & place order · ${formatRupees(totalPaise)}`}
       </Button>
-      <Button variant="ghost" onClick={onBack} disabled={working} className="h-10 font-semibold text-leaf">
+      <Button variant="ghost" onClick={onBack} disabled={working} className="h-10 font-semibold text-brand">
         Back to cart
       </Button>
     </div>

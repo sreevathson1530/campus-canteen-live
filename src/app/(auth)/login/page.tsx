@@ -41,7 +41,7 @@ function LoginForm() {
 
   return (
     <>
-      <h2 className="font-display text-3xl font-extrabold">Welcome back</h2>
+      <h2 className="text-2xl font-semibold">Welcome back</h2>
       <p className="mt-1 text-sm text-muted-foreground">Sign in to order or run the kitchen.</p>
 
       <form onSubmit={submit} className="mt-6 grid gap-4" noValidate>
@@ -76,7 +76,7 @@ function LoginForm() {
 
       <p className="mt-5 text-center text-sm text-muted-foreground">
         New here?{" "}
-        <Link href="/register" className="font-semibold text-leaf underline-offset-4 hover:underline">
+        <Link href="/register" className="font-semibold text-brand underline-offset-4 hover:underline">
           Create a student account
         </Link>
       </p>

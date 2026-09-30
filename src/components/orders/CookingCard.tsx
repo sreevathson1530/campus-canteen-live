@@ -35,7 +35,7 @@ export function CookingCard({ order, queue }: { order: OrderDTO; queue: { positi
     <section
       aria-live="polite"
       className={cn(
-        "overflow-hidden rounded-3xl p-5",
+        "overflow-hidden rounded-2xl p-5",
         preparing ? "bg-turmeric-soft text-[#5e4105] dark:text-turmeric" : "bg-secondary text-foreground",
       )}
     >
@@ -44,11 +44,11 @@ export function CookingCard({ order, queue }: { order: OrderDTO; queue: { positi
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold tracking-[0.16em] uppercase opacity-80">{preparing ? "Cooking now" : "In the queue"}</p>
           {readyAt ? (
-            <p className="font-display text-[1.65rem] leading-tight font-extrabold whitespace-nowrap">
+            <p className="text-xl leading-tight font-semibold whitespace-nowrap">
               Ready by <span className="tabular">{formatClock(new Date(readyAt))}</span>
             </p>
           ) : (
-            <p className="font-display text-2xl leading-tight font-extrabold">{preparing ? "On the stove" : "Waiting for the kitchen"}</p>
+            <p className="font-display text-2xl leading-tight font-bold">{preparing ? "On the stove" : "Waiting for the kitchen"}</p>
           )}
           {queue && (
             <p className="mt-0.5 text-sm font-semibold opacity-85">
@@ -67,7 +67,7 @@ export function CookingCard({ order, queue }: { order: OrderDTO; queue: { positi
         className="mt-4 h-3 overflow-hidden rounded-full bg-black/10 dark:bg-white/10"
       >
         <div
-          className={cn("h-full rounded-full transition-[width] duration-1000 ease-out", preparing ? "bg-turmeric animate-stripes" : "bg-leaf/70")}
+          className={cn("h-full rounded-full transition-[width] duration-1000 ease-out", preparing ? "bg-turmeric" : "bg-leaf/70")}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -84,19 +84,14 @@ export function CookingCard({ order, queue }: { order: OrderDTO; queue: { positi
 function Pot({ active }: { active: boolean }) {
   if (!active) {
     return (
-      <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-background/70">
+      <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-background/70">
         <Timer className="size-7" />
       </span>
     );
   }
   return (
-    <span className="relative grid size-16 shrink-0 place-items-end justify-center rounded-2xl bg-turmeric/25 pb-2" aria-hidden>
-      <span className="absolute top-1 left-1/2 flex -translate-x-1/2 gap-1.5">
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="block h-4 w-1 animate-steam rounded-full bg-current opacity-0" style={{ animationDelay: `${i * 0.45}s` }} />
-        ))}
-      </span>
-      <ChefHat className="size-8 animate-wobble" />
+    <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-turmeric/25" aria-hidden>
+      <ChefHat className="size-7" />
     </span>
   );
 }

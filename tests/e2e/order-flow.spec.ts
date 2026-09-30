@@ -36,7 +36,7 @@ test("student orders with an OTP, kitchen prepares it, student sees READY and th
   await login(kitchen, "kitchen@canteen.test", "kitchen123", "/kitchen");
 
   // Build a cart and check out with the code.
-  await student.getByRole("button", { name: "Add Idli (2 pcs)" }).click();
+  await student.getByRole("button", { name: "Add Classic Veg Burger" }).first().click();
   await student.getByRole("button", { name: /View cart/ }).click();
   await student.getByRole("button", { name: "Place order" }).click();
   await expect(student.getByText("We sent a 4-digit code")).toBeVisible();

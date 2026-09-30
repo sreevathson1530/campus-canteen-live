@@ -73,7 +73,7 @@ export function OrdersAdmin() {
     <div className="grid gap-5 pb-6">
       <div>
         <p className="text-sm font-semibold text-muted-foreground">Every order, live</p>
-        <h1 className="font-display text-3xl font-extrabold">Orders</h1>
+        <h1 className="text-2xl font-semibold">Orders</h1>
       </div>
 
       {/* Earnings */}
@@ -130,18 +130,18 @@ export function OrdersAdmin() {
       {query.isLoading ? (
         <div className="grid gap-2.5">
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-24 rounded-3xl" />
+            <Skeleton key={i} className="h-24 rounded-2xl" />
           ))}
         </div>
       ) : query.isError ? (
-        <div className="rounded-3xl border p-6 text-center">
+        <div className="rounded-2xl border p-6 text-center">
           <p className="font-semibold">Couldn&apos;t load orders.</p>
           <button className="mt-2 font-semibold text-leaf" onClick={() => query.refetch()}>
             Try again
           </button>
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-3xl border border-dashed p-10 text-center">
+        <div className="rounded-2xl border border-dashed p-10 text-center">
           <p className="font-bold">{range === "active" ? "No current orders" : "No orders here"}</p>
           <p className="text-sm text-muted-foreground">{dq || status ? "Try another search or filter." : "New orders appear here instantly."}</p>
         </div>
@@ -168,14 +168,14 @@ export function OrdersAdmin() {
 
 function EarningCard({ icon: Icon, label, hint, e, tone }: { icon: typeof IndianRupee; label: string; hint?: string; e?: Earnings; tone?: "leaf" }) {
   return (
-    <div className={cn("min-w-0 rounded-3xl border p-4", tone === "leaf" ? "col-span-2 border-leaf bg-leaf text-paper sm:col-span-1" : "bg-card")}>
+    <div className={cn("min-w-0 rounded-2xl border p-4", tone === "leaf" ? "col-span-2 border-brand bg-brand text-white sm:col-span-1" : "bg-card")}>
       <div className={cn("flex items-center gap-2 text-sm font-semibold", tone === "leaf" ? "text-paper/85" : "text-muted-foreground")}>
         <Icon className="size-4" /> {label}
         {hint && <span className="ml-auto hidden text-xs font-medium opacity-80 lg:inline">{hint}</span>}
       </div>
       {e ? (
         <>
-          <p className="mt-2 truncate font-display text-2xl font-extrabold tabular sm:text-3xl">{formatRupees(e.revenuePaise)}</p>
+          <p className="mt-2 truncate text-xl font-semibold tabular sm:text-3xl">{formatRupees(e.revenuePaise)}</p>
           <p className={cn("text-xs", tone === "leaf" ? "text-paper/80" : "text-muted-foreground")}>
             {e.orders} collected {e.orders === 1 ? "order" : "orders"}
           </p>
@@ -195,7 +195,7 @@ function FilterChip({ on, onClick, label, count }: { on: boolean; onClick: () =>
       onClick={onClick}
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors",
-        on ? "border-leaf bg-leaf text-paper" : "bg-card hover:bg-muted",
+        on ? "border-brand bg-brand text-white" : "bg-card hover:bg-muted",
       )}
     >
       {label}
@@ -207,9 +207,9 @@ function FilterChip({ on, onClick, label, count }: { on: boolean; onClick: () =>
 function OrderRow({ o, today, open, onToggle }: { o: AdminOrderDTO; today: string; open: boolean; onToggle: () => void }) {
   const when = o.businessDate === today ? formatClock(o.createdAt) : formatDateTime(o.createdAt);
   return (
-    <li className={cn("overflow-hidden rounded-3xl border bg-card transition-shadow", open && "shadow-lg shadow-black/5")}>
+    <li className={cn("overflow-hidden rounded-2xl border bg-card transition-shadow", open && "shadow-lg shadow-black/5")}>
       <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-3 p-3.5 text-left hover:bg-muted/40">
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-secondary font-display text-xl font-extrabold tabular">{o.tokenNumber}</span>
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-secondary text-lg font-semibold tabular">{o.tokenNumber}</span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
             <span className="truncate font-bold">{o.student.name}</span>
@@ -283,7 +283,7 @@ function OrderDetails({ o }: { o: AdminOrderDTO }) {
         </ul>
         <div className="mt-1 flex items-baseline justify-between border-t pt-2">
           <span className="font-semibold text-muted-foreground">Total</span>
-          <span className="font-display text-xl font-extrabold tabular">{formatRupees(o.totalPaise)}</span>
+          <span className="text-lg font-semibold tabular">{formatRupees(o.totalPaise)}</span>
         </div>
       </div>
 

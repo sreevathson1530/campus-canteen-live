@@ -1,6 +1,4 @@
-import dynamic from "next/dynamic";
-import { useState } from "react";
-import { AlertTriangle, Camera, Check, Clock, Flame, Plus, Rotate3d, Zap } from "lucide-react";
+import { AlertTriangle, Check, Clock, Flame, Plus, Zap } from "lucide-react";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import type { MenuItemDTO } from "@/lib/realtime/events";
@@ -11,15 +9,7 @@ import { DishImage } from "./DishImage";
 import { isSoldOut } from "./DishCard";
 import { QtyStepper } from "./QtyStepper";
 import { VegMark } from "./VegMark";
-import { SPICE_LABELS, SpiceMeter, TagBadge } from "./badges";
-
-// The live 3D viewer (three.js) loads only when the 3D view is chosen, never on the menu grid.
-const DishViewer = dynamic(() => import("@/components/food3d/DishViewer").then((m) => m.DishViewer), {
-  ssr: false,
-  loading: () => null,
-});
-
-type View = "photo" | "3d";
+import { SPICE_LABELS, SpiceMeter, TagLabel } from "./badges";
 
 export function DishSheet({
   item,
@@ -43,70 +33,32 @@ export function DishSheet({
   qtyOf?: (id: string) => number;
   onAddPairing?: (item: MenuItemDTO) => void;
 }) {
-  const [view, setView] = useState<View>("photo");
   const soldOut = item ? isSoldOut(item) : false;
-  const has3d = !!item?.modelKey;
-  const hasPhoto = !!item?.imageUrl;
-  const shown: View = !hasPhoto && has3d ? "3d" : view;
 
   return (
     <Drawer
       open={!!item}
       onOpenChange={(o) => {
-        if (!o) {
-          onClose();
-          setView("photo");
-        }
+        if (!o) onClose();
       }}
     >
-      <DrawerContent className="mx-auto max-h-[94dvh] max-w-lg rounded-t-[1.75rem]">
+      <DrawerContent className="mx-auto max-h-[94dvh] max-w-lg rounded-t-2xl">
         {item && (
           <>
-            <div className="relative mx-4 mt-2 aspect-[5/4] max-h-[38dvh] shrink-0 overflow-hidden rounded-3xl">
-              {shown === "photo" ? (
-                <DishImage name={item.name} src={item.imageUrl} still={stillFor(item.modelKey)} priority className="absolute inset-0" />
-              ) : (
-                <>
-                  <DishImage name={item.name} src={null} still={stillFor(item.modelKey)} priority className="absolute inset-0" />
-                  <DishViewer modelKey={item.modelKey!} className="absolute inset-0" />
-                </>
-              )}
-              {has3d && hasPhoto && (
-                <div
-                  role="radiogroup"
-                  aria-label="View"
-                  className="absolute top-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-background/85 p-1 shadow-sm backdrop-blur"
-                >
-                  {(
-                    [
-                      ["photo", "Photo", Camera],
-                      ["3d", "3D", Rotate3d],
-                    ] as const
-                  ).map(([v, label, Icon]) => (
-                    <button
-                      key={v}
-                      type="button"
-                      role="radio"
-                      aria-checked={shown === v}
-                      onClick={() => setView(v)}
-                      className={cn(
-                        "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors",
-                        shown === v ? "bg-foreground text-background" : "text-muted-foreground",
-                      )}
-                    >
-                      <Icon className="size-3.5" /> {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <DishImage
+              name={item.name}
+              src={item.imageUrl}
+              still={stillFor(item.modelKey)}
+              priority
+              className="mx-4 mt-2 aspect-[16/10] max-h-[34dvh] shrink-0 rounded-xl"
+            />
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <DrawerHeader className="pb-1 text-left">
-                <TagBadge tags={item.tags} className="self-start" />
+                <TagLabel tags={item.tags} className="self-start" />
                 <div className="flex items-start justify-between gap-3">
-                  <DrawerTitle className="font-display text-2xl leading-tight font-extrabold">{item.name}</DrawerTitle>
-                  <span className="font-display text-2xl font-extrabold tabular">{formatRupees(item.pricePaise)}</span>
+                  <DrawerTitle className="text-xl leading-tight font-semibold">{item.name}</DrawerTitle>
+                  <span className="text-xl font-semibold tabular">{formatRupees(item.pricePaise)}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   <VegMark isVeg={item.isVeg} withLabel />
@@ -116,13 +68,13 @@ export function DishSheet({
                     <span className="font-semibold text-[#9a6a08] dark:text-turmeric">Only {item.stock} left</span>
                   ) : null}
                 </div>
-                <DrawerDescription className="pt-1 text-[15px] text-foreground/80">{item.description}</DrawerDescription>
+                <DrawerDescription className="pt-1 text-left text-[15px] text-muted-foreground">{item.description}</DrawerDescription>
               </DrawerHeader>
 
               {/* Quick facts */}
               <dl className="mx-4 grid grid-cols-3 divide-x rounded-2xl border bg-muted/40 text-center">
                 <Fact icon={Clock} label="Ready in">
-                  <span className="font-display text-lg leading-none font-extrabold">~{item.prepMinutes} min</span>
+                  <span className="font-display text-lg leading-none font-bold">~{item.prepMinutes} min</span>
                 </Fact>
                 <Fact icon={Flame} label="Spice">
                   <span className="flex flex-col items-center gap-0.5">
@@ -133,7 +85,7 @@ export function DishSheet({
                   </span>
                 </Fact>
                 <Fact icon={Zap} label="Energy">
-                  <span className="font-display text-lg leading-none font-extrabold">
+                  <span className="font-display text-lg leading-none font-bold">
                     {item.calories !== null ? (
                       <>
                         {item.calories}
@@ -193,7 +145,7 @@ export function DishSheet({
                             aria-label={inCart ? `${p.name} is in your cart` : `Add ${p.name}`}
                             className={cn(
                               "grid size-9 shrink-0 place-items-center rounded-full transition active:scale-90",
-                              inCart ? "bg-leaf-soft text-leaf" : "bg-leaf text-paper disabled:bg-muted disabled:text-muted-foreground",
+                              inCart ? "bg-brand-soft text-brand" : "bg-brand text-white disabled:bg-muted disabled:text-muted-foreground",
                             )}
                           >
                             {inCart ? <Check className="size-4" strokeWidth={3} /> : <Plus className="size-5" strokeWidth={2.6} />}

@@ -4,28 +4,20 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Flame, Search, ShoppingBag, Store, Timer, X } from "lucide-react";
+import { Clock3, Search, ShoppingBag, Store, X } from "lucide-react";
 import { useLiveMenu } from "@/hooks/useLiveMenu";
 import { usePulse } from "@/hooks/usePulse";
 import type { MenuItemDTO } from "@/lib/realtime/events";
-import { stillFor } from "@/lib/dish-keys";
 import { useCart } from "@/stores/cart";
 import { formatRupees } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { CartSheet, useCartRows } from "./CartSheet";
-import { DishCard, isSoldOut } from "./DishCard";
+import { AddControl, DishCard, isSoldOut } from "./DishCard";
 import { DishImage } from "./DishImage";
 import { DishSheet } from "./DishSheet";
 import { VegMark } from "./VegMark";
-
-type FilterKey = "veg" | "under50" | "quick" | "mild";
-const FILTERS: { key: FilterKey; label: string; test: (i: MenuItemDTO) => boolean }[] = [
-  { key: "veg", label: "Veg only", test: (i) => i.isVeg },
-  { key: "under50", label: "Under ₹50", test: (i) => i.pricePaise < 5000 },
-  { key: "quick", label: "Ready in 5 min", test: (i) => i.prepMinutes <= 5 },
-  { key: "mild", label: "Not spicy", test: (i) => i.spiceLevel <= 1 },
-];
 
 /** Every word of the query must appear in the name, description or ingredients. */
 function matches(i: MenuItemDTO, q: string): boolean {
@@ -49,8 +41,9 @@ export function MenuScreen({ firstName }: { firstName: string }) {
   const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState<Set<FilterKey>>(() => new Set());
+  const [vegOnly, setVegOnly] = useState(false);
   const sectionRefs = useRef(new Map<string, HTMLElement>());
+  const tabRefs = useRef(new Map<string, HTMLElement>());
   const { count, totalPaise, blocked } = useCartRows(data?.items);
 
   const settings = data?.settings;
@@ -58,17 +51,17 @@ export function MenuScreen({ firstName }: { firstName: string }) {
   const qtyOf = (id: string) => lines.find((l) => l.menuItemId === id)?.quantity ?? 0;
   const openItem = data?.items.find((i) => i.id === openItemId) ?? null;
 
-  const narrowing = query.trim() !== "" || filters.size > 0;
+  const q = query.trim();
+  const narrowing = q !== "" || vegOnly;
   const sections = useMemo(() => {
-    const active = FILTERS.filter((f) => filters.has(f.key));
-    const keep = (i: MenuItemDTO) => matches(i, query.trim()) && active.every((f) => f.test(i));
+    const keep = (i: MenuItemDTO) => matches(i, q) && (!vegOnly || i.isVeg);
     return (data?.categories ?? [])
       .map((c) => ({
         ...c,
         items: (data?.items ?? []).filter((i) => i.categoryId === c.id && keep(i)).sort((a, b) => a.sortOrder - b.sortOrder),
       }))
       .filter((c) => c.items.length > 0);
-  }, [data, query, filters]);
+  }, [data, q, vegOnly]);
   const resultCount = sections.reduce((n, c) => n + c.items.length, 0);
 
   // Best sellers from real sales (last 7 days), topped up with items tagged "bestseller".
@@ -77,7 +70,7 @@ export function MenuScreen({ firstName }: { firstName: string }) {
     const byId = new Map(items.map((i) => [i.id, i]));
     const sold = (pulse?.popular ?? []).map((p) => byId.get(p.id)).filter((i): i is MenuItemDTO => !!i && !isSoldOut(i));
     const tagged = items.filter((i) => i.tags.includes("bestseller") && !isSoldOut(i) && !sold.includes(i));
-    return [...sold, ...tagged].slice(0, 6);
+    return [...sold, ...tagged].slice(0, 8);
   }, [data, pulse]);
 
   const pairings = useMemo(() => {
@@ -95,188 +88,115 @@ export function MenuScreen({ firstName }: { firstName: string }) {
     window.history.replaceState(null, "", url.pathname + url.search);
   }, [openCartOnLoad]);
 
-  // Highlight the tab of the section in view.
+  // Highlight the tab of the section in view, and keep that tab visible in the strip.
   useEffect(() => {
     const els = [...sectionRefs.current.values()];
     if (!els.length) return;
     const io = new IntersectionObserver(
       (entries) => {
         const top = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (top) setActiveCat(top.target.id.replace("cat-", ""));
+        if (!top) return;
+        const id = top.target.id.replace("cat-", "");
+        setActiveCat(id);
+        tabRefs.current.get(id)?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
       },
-      { rootMargin: "-120px 0px -60% 0px" },
+      { rootMargin: "-130px 0px -60% 0px" },
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [sections.length]);
 
-  function addItem(id: string, pricePaise: number, name: string): boolean {
-    const ok = add(id, pricePaise);
-    if (!ok) toast.error(`Up to 10 of ${name}, and 10 different items per order`);
+  function addItem(item: MenuItemDTO): boolean {
+    const ok = add(item.id, item.pricePaise);
+    if (!ok) toast.error(`Up to 10 of ${item.name}, and 10 different items per order`);
     return ok;
-  }
-
-  function toggleFilter(k: FilterKey) {
-    setFilters((f) => {
-      const n = new Set(f);
-      if (n.has(k)) n.delete(k);
-      else n.add(k);
-      return n;
-    });
   }
 
   const shownCat = activeCat ?? sections[0]?.id ?? null;
 
   return (
     <div className="pb-24">
-      <section className="pt-2 pb-3">
-        <p className="text-sm font-semibold text-muted-foreground">Hi {firstName} 👋</p>
-        <h1 className="font-display text-[2rem] leading-[1.05] font-extrabold">What are you craving?</h1>
+      {/* Banner */}
+      <section className="relative -mx-4 -mt-4 overflow-hidden bg-brand px-4 py-5 text-white sm:mx-0 sm:mt-0 sm:rounded-2xl sm:px-8 sm:py-8">
+        <p className="text-sm text-white/85">Hi {firstName}</p>
+        <h1 className="mt-0.5 text-2xl leading-tight font-bold sm:text-3xl">What would you like today?</h1>
+        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
+          {isOpen ? (
+            <>
+              <Clock3 className="size-4" /> Pickup in about {pulse?.waitMinutes ?? settings?.minutesPerOrder ?? 5} min
+              {pulse && pulse.queueLength > 0 && ` · ${pulse.queueLength} ahead`}
+            </>
+          ) : (
+            <>
+              <Store className="size-4" /> Closed right now
+            </>
+          )}
+        </p>
       </section>
 
       {!isOpen && (
-        <div role="status" className="mb-4 flex items-start gap-3 rounded-2xl bg-chili-soft p-4 text-chili">
-          <Store className="mt-0.5 size-5 shrink-0" />
-          <div>
-            <p className="font-bold">{settings?.canteenName ?? "The canteen"} is closed</p>
-            <p className="text-sm">{settings?.closedMessage || "Ordering is paused for now."}</p>
-          </div>
+        <div role="status" className="mt-3 rounded-xl border border-chili/30 bg-chili-soft p-3 text-sm text-chili">
+          <b>{settings?.canteenName ?? "We"} is closed.</b> {settings?.closedMessage || "Ordering is paused for now."}
         </div>
       )}
 
-      {isOpen && pulse && (
-        <div
-          role="status"
-          className={cn("mb-3 flex items-center gap-3 rounded-2xl px-4 py-3 text-sm", pulse.busy ? "bg-turmeric-soft" : "bg-leaf-soft")}
-        >
-          <span
-            className={cn("grid size-9 shrink-0 place-items-center rounded-xl", pulse.busy ? "bg-turmeric text-[#3a2a05]" : "bg-leaf text-paper")}
-          >
-            {pulse.busy ? <Flame className="size-5" /> : <Timer className="size-5" />}
-          </span>
-          <p className="flex-1 leading-snug">
-            <span className="font-bold">{pulse.busy ? "Kitchen is busy" : "Kitchen is free"}</span>
-            <span className="text-muted-foreground">
-              {" · "}
-              {pulse.queueLength === 0
-                ? "no orders ahead of you"
-                : `${pulse.queueLength} ${pulse.queueLength === 1 ? "order" : "orders"} ahead`}
-            </span>
-          </p>
-          <span className="font-display text-lg font-extrabold whitespace-nowrap tabular">~{pulse.waitMinutes} min</span>
-        </div>
-      )}
-
-      {/* Search and filters */}
-      <div className="relative mb-2">
-        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search dosa, biryani, coffee…"
-          aria-label="Search the menu"
-          className="h-12 w-full rounded-2xl border bg-card pr-10 pl-10 text-[15px] outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-search-cancel-button]:hidden"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label="Clear search"
-            className="absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-muted"
-          >
-            <X className="size-4" />
-          </button>
-        )}
-      </div>
-      <div role="group" aria-label="Filters" className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-        {FILTERS.map((f) => {
-          const on = filters.has(f.key);
-          return (
+      {/* Search + veg filter */}
+      <div className="mt-4 flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search the menu"
+            aria-label="Search the menu"
+            className="h-11 w-full rounded-lg border bg-card pr-10 pl-10 text-[15px] outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20 [&::-webkit-search-cancel-button]:hidden"
+          />
+          {query && (
             <button
-              key={f.key}
               type="button"
-              aria-pressed={on}
-              onClick={() => toggleFilter(f.key)}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors",
-                on ? "border-leaf bg-leaf text-paper" : "bg-card hover:bg-muted",
-              )}
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute top-1/2 right-1.5 grid size-8 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-muted"
             >
-              {f.label}
+              <X className="size-4" />
             </button>
-          );
-        })}
+          )}
+        </div>
+        <label className="flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg border bg-card px-3 text-sm font-semibold">
+          <VegMark isVeg />
+          Veg
+          <Switch checked={vegOnly} onCheckedChange={setVegOnly} aria-label="Show vegetarian dishes only" />
+        </label>
       </div>
 
-      {/* Popular right now */}
-      {!narrowing && popular.length > 0 && (
-        <section aria-labelledby="pop-h" className="mb-5">
-          <div className="mb-2.5 flex items-baseline justify-between">
-            <h2 id="pop-h" className="font-display text-xl font-extrabold">
-              Popular right now
-            </h2>
-            <span className="text-xs font-semibold text-muted-foreground">Top picks this week</span>
-          </div>
-          <ul className="relative -mx-4 flex scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-            {popular.map((item, i) => (
-              <li key={item.id} className="w-36 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setOpenItemId(item.id)}
-                  className="group w-full text-left"
-                  aria-label={`${item.name}, number ${i + 1} this week`}
-                >
-                  <div className="relative">
-                    <DishImage
-                      name={item.name}
-                      src={item.imageUrl}
-                      still={stillFor(item.modelKey)}
-                      priority={i < 3}
-                      className="aspect-square rounded-2xl transition-transform group-active:scale-95"
-                    />
-                    <span className="absolute bottom-1.5 left-1.5 grid size-7 place-items-center rounded-full bg-turmeric font-display text-sm font-extrabold text-[#3a2a05] shadow">
-                      {i + 1}
-                    </span>
-                    {qtyOf(item.id) > 0 && (
-                      <span className="absolute top-1.5 right-1.5 rounded-full bg-leaf px-2 py-0.5 text-[11px] font-bold text-paper">
-                        ×{qtyOf(item.id)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1.5 flex items-center gap-1.5 text-sm font-bold">
-                    <VegMark isVeg={item.isVeg} />
-                    <span className="truncate">{item.name}</span>
-                  </p>
-                  <p className="text-xs font-semibold text-muted-foreground tabular">{formatRupees(item.pricePaise)}</p>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Sticky category tabs */}
+      {/* Category strip */}
       <nav
         aria-label="Categories"
-        className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-20 -mx-4 mb-3 border-b bg-background/90 px-4 py-2.5 backdrop-blur-md"
+        className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-20 -mx-4 mt-3 border-b bg-card px-4 shadow-[0_1px_0_rgba(0,0,0,.02)] sm:mx-0 sm:rounded-lg sm:border"
       >
-        <ul className="flex gap-2 overflow-x-auto [scrollbar-width:none]">
+        <ul className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
           {isLoading
-            ? Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-9 w-24 shrink-0 rounded-full" />)
+            ? Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="my-3 h-5 w-20 shrink-0 rounded" />)
             : sections.map((c) => (
-                <li key={c.id} className="shrink-0">
+                <li
+                  key={c.id}
+                  className="shrink-0"
+                  ref={(el) => {
+                    if (el) tabRefs.current.set(c.id, el);
+                    else tabRefs.current.delete(c.id);
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => sectionRefs.current.get(c.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
                     aria-current={shownCat === c.id ? "true" : undefined}
                     className={cn(
-                      "rounded-full px-4 py-2 text-sm font-bold transition-colors",
-                      shownCat === c.id ? "bg-foreground text-background" : "bg-secondary text-secondary-foreground hover:bg-muted",
+                      "border-b-2 px-3 py-3 text-sm font-semibold whitespace-nowrap transition-colors",
+                      shownCat === c.id ? "border-brand text-brand" : "border-transparent text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {c.name}
-                    {narrowing && <span className="ml-1.5 opacity-60 tabular">{c.items.length}</span>}
                   </button>
                 </li>
               ))}
@@ -284,81 +204,116 @@ export function MenuScreen({ firstName }: { firstName: string }) {
       </nav>
 
       {isError && (
-        <div className="rounded-2xl border p-6 text-center">
+        <div className="mt-4 rounded-xl border bg-card p-6 text-center">
           <p className="font-semibold">Couldn&apos;t load the menu.</p>
-          <button className="mt-2 font-semibold text-leaf" onClick={() => refetch()}>
+          <button className="mt-2 font-semibold text-brand" onClick={() => refetch()}>
             Try again
           </button>
         </div>
       )}
 
       {isLoading && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="aspect-[4/5] rounded-3xl" />
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 8 }, (_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl sm:h-72" />
           ))}
         </div>
       )}
 
+      {/* Bestsellers */}
+      {!narrowing && popular.length > 0 && (
+        <section aria-labelledby="pop-h" className="mt-6">
+          <h2 id="pop-h" className="text-lg font-bold">
+            Bestsellers
+          </h2>
+          <ul className="relative -mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:px-0">
+            {popular.map((item, i) => (
+              <li key={item.id} className="w-40 shrink-0 overflow-hidden rounded-xl border bg-card shadow-sm">
+                <button type="button" onClick={() => setOpenItemId(item.id)} className="block w-full text-left" aria-label={`${item.name}, view details`}>
+                  <DishImage name={item.name} src={item.imageUrl} priority={i < 3} className="aspect-[4/3] w-full" />
+                </button>
+                <div className="p-3">
+                  <p className="flex items-center gap-1.5 text-sm font-semibold">
+                    <VegMark isVeg={item.isVeg} />
+                    <span className="truncate">{item.name}</span>
+                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold tabular">{formatRupees(item.pricePaise)}</span>
+                    <AddControl
+                      item={item}
+                      qty={qtyOf(item.id)}
+                      canOrder={isOpen}
+                      onAdd={() => addItem(item)}
+                      onQty={(n) => setQty(item.id, n)}
+                      className="[&:is(button)]:h-8 [&:is(button)]:px-3"
+                    />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {narrowing && !isLoading && (
-        <div className="mb-3 flex items-center justify-between text-sm">
+        <div className="mt-5 flex items-center justify-between text-sm">
           <p className="font-semibold" aria-live="polite">
             {resultCount} {resultCount === 1 ? "dish" : "dishes"} found
           </p>
           <button
             type="button"
-            className="font-semibold text-leaf"
+            className="font-semibold text-brand"
             onClick={() => {
               setQuery("");
-              setFilters(new Set());
+              setVegOnly(false);
             }}
           >
-            Clear all
+            Clear
           </button>
         </div>
       )}
       {narrowing && !isLoading && resultCount === 0 && (
-        <div className="rounded-3xl border border-dashed p-8 text-center">
-          <p className="font-bold">Nothing matches that</p>
-          <p className="text-sm text-muted-foreground">Try another word or remove a filter.</p>
+        <div className="mt-3 rounded-xl border border-dashed bg-card p-8 text-center">
+          <p className="font-semibold">Nothing matches that</p>
+          <p className="text-sm text-muted-foreground">Try another word or turn off the Veg filter.</p>
         </div>
       )}
 
-      <div className="grid gap-8">
-        {sections.map((c, ci) => (
-          <section
-            key={c.id}
-            id={`cat-${c.id}`}
-            ref={(el) => {
-              if (el) sectionRefs.current.set(c.id, el);
-              else sectionRefs.current.delete(c.id);
-            }}
-            className="scroll-mt-32"
-            aria-labelledby={`h-${c.id}`}
-          >
-            <h2 id={`h-${c.id}`} className="mb-3 font-display text-xl font-extrabold">
-              {c.name}
-            </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {c.items.map((item, ii) => (
-                <DishCard
-                  key={item.id}
-                  item={item}
-                  qty={qtyOf(item.id)}
-                  canOrder={isOpen}
-                  priority={ci === 0 && ii < 4}
-                  onAdd={() => addItem(item.id, item.pricePaise, item.name)}
-                  onQty={(q) => setQty(item.id, q)}
-                  onOpen={() => setOpenItemId(item.id)}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+      {/* Sections */}
+      {sections.map((c, ci) => (
+        <section
+          key={c.id}
+          id={`cat-${c.id}`}
+          ref={(el) => {
+            if (el) sectionRefs.current.set(c.id, el);
+            else sectionRefs.current.delete(c.id);
+          }}
+          className="scroll-mt-32 pt-7"
+          aria-labelledby={`h-${c.id}`}
+        >
+          <h2 id={`h-${c.id}`} className="flex items-baseline gap-2 text-lg font-bold">
+            {c.name}
+            <span className="text-sm font-medium text-muted-foreground">{c.items.length}</span>
+          </h2>
+          <div className="-mx-4 mt-3 divide-y border-y bg-card sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:divide-y-0 sm:border-0 sm:bg-transparent lg:grid-cols-4 [&>article]:pb-7 sm:[&>article]:pb-0">
+            {c.items.map((item, ii) => (
+              <DishCard
+                key={item.id}
+                item={item}
+                qty={qtyOf(item.id)}
+                canOrder={isOpen}
+                priority={ci === 0 && ii < 4}
+                onAdd={() => addItem(item)}
+                onQty={(n) => setQty(item.id, n)}
+                onOpen={() => setOpenItemId(item.id)}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
 
       <p className="mt-10 text-center text-xs text-muted-foreground">
-        Food photos from Wikimedia Commons ·{" "}
+        Photos from Wikimedia Commons ·{" "}
         <Link href="/credits" className="font-semibold underline-offset-4 hover:underline">
           Credits
         </Link>
@@ -371,46 +326,32 @@ export function MenuScreen({ firstName }: { firstName: string }) {
             type="button"
             onClick={() => setCartOpen(true)}
             className={cn(
-              "mx-auto flex w-full max-w-lg animate-rise items-center gap-3 rounded-2xl px-4 py-3.5 text-left text-paper shadow-xl shadow-leaf/30",
-              blocked || !isOpen ? "bg-foreground" : "bg-leaf",
+              "mx-auto flex w-full max-w-lg items-center gap-3 rounded-xl px-4 py-3 text-left text-white shadow-lg",
+              blocked || !isOpen ? "bg-foreground" : "bg-brand",
             )}
           >
-            <span className="relative grid size-9 place-items-center rounded-xl bg-white/15">
-              <ShoppingBag className="size-5" />
-              <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-turmeric text-[11px] font-extrabold text-[#3a2a05]">
-                {count}
-              </span>
+            <ShoppingBag className="size-5" />
+            <span className="flex-1 text-sm font-semibold">
+              {count} {count === 1 ? "item" : "items"} · <span className="tabular">{formatRupees(totalPaise)}</span>
+              {blocked ? " · check cart" : ""}
             </span>
-            <span className="flex-1">
-              <span className="block text-xs font-semibold opacity-80">
-                {count} {count === 1 ? "item" : "items"}
-                {blocked ? " · check cart" : ""}
-              </span>
-              <span className="font-display text-lg font-extrabold tabular">{formatRupees(totalPaise)}</span>
-            </span>
-            <span className="font-bold">View cart →</span>
+            <span className="text-sm font-bold">View cart →</span>
           </button>
         </div>
       )}
 
-      <CartSheet
-        open={cartOpen}
-        onOpenChange={setCartOpen}
-        items={data?.items}
-        isOpen={isOpen}
-        closedMessage={settings?.closedMessage ?? null}
-      />
+      <CartSheet open={cartOpen} onOpenChange={setCartOpen} items={data?.items} isOpen={isOpen} closedMessage={settings?.closedMessage ?? null} />
       <DishSheet
         item={openItem}
         qty={openItem ? qtyOf(openItem.id) : 0}
         canOrder={isOpen}
         onClose={() => setOpenItemId(null)}
-        onAdd={() => openItem && addItem(openItem.id, openItem.pricePaise, openItem.name)}
-        onQty={(q) => openItem && setQty(openItem.id, q)}
+        onAdd={() => openItem && addItem(openItem)}
+        onQty={(n) => openItem && setQty(openItem.id, n)}
         pairings={pairings}
         qtyOf={qtyOf}
         onAddPairing={(p) => {
-          if (addItem(p.id, p.pricePaise, p.name)) toast.success(`${p.name} added`);
+          if (addItem(p)) toast.success(`${p.name} added`);
         }}
       />
     </div>

@@ -51,7 +51,7 @@ export function KitchenCard({
   return (
     <article
       className={cn(
-        "rounded-3xl border bg-card p-4 shadow-sm transition-all",
+        "rounded-2xl border bg-card p-4 shadow-sm transition-all",
         flash && "animate-flash border-turmeric",
         pending && "opacity-70",
       )}
@@ -59,7 +59,7 @@ export function KitchenCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="font-display text-4xl leading-none font-extrabold tabular">{order.tokenNumber}</span>
+          <span className="font-display text-4xl leading-none font-bold tabular">{order.tokenNumber}</span>
           <span className="font-semibold">{order.studentFirstName}</span>
         </div>
         <span className={cn("rounded-lg px-2 py-1 font-mono text-xs font-bold tabular", tone.cls)} title="Time since ordered">

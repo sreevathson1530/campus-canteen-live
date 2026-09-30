@@ -1,17 +1,22 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* Light theme only: dark: utilities apply only under an explicit .dark class, which the app never sets. */
+@custom-variant dark (&:where(.dark, .dark *));
 @import "shadcn/tailwind.css";
 
 /* Dark mode follows the system setting. */
-@custom-variant dark (@media (prefers-color-scheme: dark));
 
 @theme inline {
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-bricolage), var(--font-figtree), ui-sans-serif, sans-serif;
-  --font-display: var(--font-bricolage), ui-sans-serif, sans-serif;
+  --font-heading: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
   /* Brand: banana leaf, turmeric, chili */
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-soft: var(--brand-soft);
   --color-leaf: var(--leaf);
   --color-leaf-soft: var(--leaf-soft);
   --color-turmeric: var(--turmeric);
@@ -62,80 +67,48 @@
 }
 
 :root {
-  --leaf: #1f5e3b;
-  --leaf-soft: #dcebdf;
+  --brand: #d2112c;
+  --brand-dark: #a90d23;
+  --brand-soft: #fdecef;
+  --leaf: #1a8a4a;
+  --leaf-soft: #e6f4ec;
   --turmeric: #e3a21a;
-  --turmeric-soft: #fbebc6;
+  --turmeric-soft: #fdf4de;
   --chili: #c23b22;
-  --chili-soft: #f6dcd5;
+  --chili-soft: #fbe9e5;
   --steel: #b9bcc0;
-  --paper: #faf6ee;
-  --paper-2: #f2ebdd;
+  --paper: #ffffff;
+  --paper-2: #f6f6f7;
 
-  --background: #faf6ee;
-  --foreground: #1b1a17;
+  --background: #f6f6f7;
+  --foreground: #1d1d1f;
   --card: #ffffff;
-  --card-foreground: #1b1a17;
+  --card-foreground: #1d1d1f;
   --popover: #ffffff;
-  --popover-foreground: #1b1a17;
-  --primary: #1f5e3b;
-  --primary-foreground: #faf6ee;
-  --secondary: #f2ebdd;
-  --secondary-foreground: #1b1a17;
-  --muted: #f2ebdd;
-  --muted-foreground: #6b6558;
-  --accent: #fbebc6;
-  --accent-foreground: #1b1a17;
+  --popover-foreground: #1d1d1f;
+  --primary: #d2112c;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0f2;
+  --secondary-foreground: #1d1d1f;
+  --muted: #f0f0f2;
+  --muted-foreground: #6e6e73;
+  --accent: #f0f0f2;
+  --accent-foreground: #1d1d1f;
   --destructive: #c23b22;
-  --border: #e1d8c6;
-  --input: #e1d8c6;
-  --ring: #2f7a4f;
+  --border: #e5e5e8;
+  --input: #d9d9de;
+  --ring: #d2112c;
   --chart-1: #1f5e3b;
   --chart-2: #e3a21a;
   --chart-3: #c23b22;
   --chart-4: #2f7a4f;
   --chart-5: #8e9296;
-  --radius: 0.875rem;
+  --radius: 0.625rem;
   /* Single-series data mark, validated for lightness, chroma and 3:1 contrast on this surface. */
   --chart-bar: #2e8b57;
   --chart-bar-muted: #cfe3d6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --leaf: #5fbf85;
-    --leaf-soft: #1c3526;
-    --turmeric: #f0b53a;
-    --turmeric-soft: #3d2f10;
-    --chili: #ef6a50;
-    --chili-soft: #3f1d16;
-    --steel: #5d6166;
-    --paper: #151412;
-    --paper-2: #211f1b;
-
-    --background: #151412;
-    --foreground: #f3eee4;
-    --card: #1e1c19;
-    --card-foreground: #f3eee4;
-    --popover: #1e1c19;
-    --popover-foreground: #f3eee4;
-    --primary: #5fbf85;
-    --primary-foreground: #0e1a13;
-    --secondary: #2a2723;
-    --secondary-foreground: #f3eee4;
-    --muted: #2a2723;
-    --muted-foreground: #b3ab9c;
-    --accent: #3d2f10;
-    --accent-foreground: #f3eee4;
-    --destructive: #ef6a50;
-    --border: #34302a;
-    --input: #3a362f;
-    --ring: #5fbf85;
-    --chart-bar: #4caa73;
-    --chart-bar-muted: #2a3d31;
-    color-scheme: dark;
-  }
-}
 
 @layer base {
   * {

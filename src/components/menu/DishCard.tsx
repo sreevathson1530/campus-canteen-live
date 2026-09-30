@@ -1,17 +1,61 @@
-import { Plus } from "lucide-react";
 import type { MenuItemDTO } from "@/lib/realtime/events";
 import { formatRupees } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import { stillFor } from "@/lib/dish-keys";
 import { DishImage } from "./DishImage";
 import { QtyStepper } from "./QtyStepper";
 import { VegMark } from "./VegMark";
-import { PrepTime, SpiceMeter, TagBadge } from "./badges";
+import { SpiceMeter, TagLabel } from "./badges";
 
 export function isSoldOut(i: Pick<MenuItemDTO, "isAvailable" | "stock">): boolean {
   return !i.isAvailable || i.stock === 0;
 }
 
+/** ADD button that turns into a − n + stepper once the dish is in the cart. */
+export function AddControl({
+  item,
+  qty,
+  onAdd,
+  onQty,
+  canOrder,
+  className,
+}: {
+  item: MenuItemDTO;
+  qty: number;
+  onAdd: () => void;
+  onQty: (q: number) => void;
+  canOrder: boolean;
+  className?: string;
+}) {
+  if (isSoldOut(item)) {
+    return <span className={cn("rounded-lg border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground", className)}>Sold out</span>;
+  }
+  if (qty > 0) {
+    return (
+      <span className={className}>
+        <QtyStepper size="sm" value={qty} onChange={onQty} label={item.name} disabledPlus={item.stock !== null && qty >= item.stock} />
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onAdd}
+      disabled={!canOrder}
+      aria-label={`Add ${item.name}`}
+      className={cn(
+        "h-9 rounded-lg border border-brand bg-card px-5 text-sm font-bold tracking-wide text-brand shadow-sm transition hover:bg-brand-soft active:scale-95 disabled:border-border disabled:text-muted-foreground",
+        className,
+      )}
+    >
+      ADD
+    </button>
+  );
+}
+
+/**
+ * One dish. On phones it is a row (text left, photo right, ADD under the photo); from `sm` up it is
+ * a card with the photo on top.
+ */
 export function DishCard({
   item,
   qty,
@@ -31,61 +75,47 @@ export function DishCard({
 }) {
   const soldOut = isSoldOut(item);
   const low = !soldOut && item.stock !== null && item.stock <= 5;
-  const atStockLimit = item.stock !== null && qty >= item.stock;
 
   return (
     <article
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-3xl border bg-card transition-shadow hover:shadow-lg hover:shadow-black/5",
-        soldOut && "opacity-60 saturate-50",
+        "flex gap-3 bg-card p-4 sm:flex-col sm:gap-0 sm:overflow-hidden sm:rounded-xl sm:border sm:p-0 sm:shadow-sm",
+        soldOut && "opacity-60",
       )}
     >
-      <button type="button" onClick={onOpen} className="text-left" aria-label={`${item.name}, view in 3D`}>
-        <DishImage name={item.name} src={item.imageUrl} still={stillFor(item.modelKey)} priority={priority} className="aspect-[5/4] w-full" />
-        {soldOut || low ? (
-          <span
-            className={cn(
-              "absolute top-2.5 left-2.5 rounded-full px-2 py-0.5 text-[11px] font-bold",
-              soldOut ? "bg-foreground text-background" : "bg-chili text-white",
-            )}
-          >
-            {soldOut ? "Sold out" : `Only ${item.stock} left`}
-          </span>
-        ) : (
-          <TagBadge tags={item.tags} className="absolute top-2.5 left-2.5" />
-        )}
-        <span className="absolute top-2.5 right-2.5 rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase backdrop-blur">
-          3D
-        </span>
-      </button>
+      {/* Photo + ADD (right on phones, top on larger screens) */}
+      <div className="relative order-2 w-[7.5rem] shrink-0 sm:order-1 sm:w-full">
+        <button type="button" onClick={onOpen} className="block w-full" aria-label={`${item.name}, view details`}>
+          <DishImage name={item.name} src={item.imageUrl} priority={priority} className="aspect-square w-full rounded-xl sm:aspect-[4/3] sm:rounded-none" />
+        </button>
+        <AddControl
+          item={item}
+          qty={qty}
+          onAdd={onAdd}
+          onQty={onQty}
+          canOrder={canOrder}
+          className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap sm:hidden"
+        />
+      </div>
 
-      <div className="flex flex-1 flex-col gap-1 p-3 pt-2.5">
-        <div className="flex items-start gap-1.5">
-          <VegMark isVeg={item.isVeg} className="mt-1" />
-          <h3 className="line-clamp-2 font-sans text-[15px] leading-tight font-bold">{item.name}</h3>
+      <div className="order-1 flex min-w-0 flex-1 flex-col sm:order-2 sm:p-4">
+        <div className="flex items-center gap-2">
+          <VegMark isVeg={item.isVeg} />
+          <TagLabel tags={item.tags} />
         </div>
-        {item.description && <p className="line-clamp-2 text-xs text-muted-foreground">{item.description}</p>}
-        <div className="flex items-center gap-2.5 pt-0.5">
-          <PrepTime minutes={item.prepMinutes} />
+        <h3 className="mt-1 text-base leading-snug font-semibold">
+          <button type="button" onClick={onOpen} className="text-left hover:underline">
+            {item.name}
+          </button>
+        </h3>
+        <p className="mt-0.5 font-semibold tabular">{formatRupees(item.pricePaise)}</p>
+        {item.description && <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{item.description}</p>}
+        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
           {item.spiceLevel > 0 && <SpiceMeter level={item.spiceLevel} />}
+          {low && <span className="font-semibold text-chili">Only {item.stock} left</span>}
         </div>
-        <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
-          <span className="font-display text-lg font-extrabold tabular">{formatRupees(item.pricePaise)}</span>
-          {soldOut ? (
-            <span className="text-xs font-semibold text-muted-foreground">Unavailable</span>
-          ) : qty > 0 ? (
-            <QtyStepper size="sm" value={qty} onChange={onQty} label={item.name} disabledPlus={atStockLimit} />
-          ) : (
-            <button
-              type="button"
-              onClick={onAdd}
-              disabled={!canOrder}
-              className="grid size-9 place-items-center rounded-full bg-leaf text-paper shadow-sm transition active:scale-90 disabled:bg-muted disabled:text-muted-foreground"
-              aria-label={`Add ${item.name}`}
-            >
-              <Plus className="size-5" strokeWidth={2.6} />
-            </button>
-          )}
+        <div className="mt-auto hidden pt-3 sm:block">
+          <AddControl item={item} qty={qty} onAdd={onAdd} onQty={onQty} canOrder={canOrder} className="w-full" />
         </div>
       </div>
     </article>

@@ -6,7 +6,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
   const user = await guardLayout("/menu", "STUDENT");
   return (
     <SocketProvider>
-      <AppShell role={user.role} firstName={user.firstName}>
+      <AppShell role={user.role} firstName={user.firstName} wide>
         {children}
       </AppShell>
     </SocketProvider>

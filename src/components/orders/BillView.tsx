@@ -5,9 +5,9 @@ import { formatDateTime } from "@/lib/time";
 /** The receipt itself. Values are the copies stored on the bill, never live menu data. */
 export function BillView({ bill }: { bill: BillDTO }) {
   return (
-    <article className="bill-print mx-auto w-full max-w-sm rounded-3xl border bg-card p-6 shadow-sm print:border-0 print:shadow-none">
+    <article className="bill-print mx-auto w-full max-w-sm rounded-2xl border bg-card p-6 shadow-sm print:border-0 print:shadow-none">
       <div className="border-b border-dashed pb-4 text-center">
-        <p className="font-display text-xl font-extrabold">{bill.canteenName}</p>
+        <p className="text-lg font-semibold">{bill.canteenName}</p>
         <p className="text-sm text-muted-foreground">Bill no. {bill.billNumber}</p>
       </div>
 
@@ -46,8 +46,8 @@ export function BillView({ bill }: { bill: BillDTO }) {
       </table>
 
       <div className="flex items-baseline justify-between pt-4">
-        <span className="font-display text-lg font-extrabold">Total</span>
-        <span className="font-display text-2xl font-extrabold tabular">{formatRupees(bill.totalPaise)}</span>
+        <span className="text-base font-semibold">Total</span>
+        <span className="text-xl font-semibold tabular">{formatRupees(bill.totalPaise)}</span>
       </div>
       <p className="mt-4 text-center text-xs text-muted-foreground">
         Handed over by {bill.collectedByName} · Thank you!

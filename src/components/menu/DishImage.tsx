@@ -61,7 +61,7 @@ export function DishImage({
       ) : (
         <span
           aria-hidden
-          className="grid size-3/5 max-h-20 max-w-20 place-items-center rounded-2xl font-display text-3xl font-extrabold text-[#3a2a05]/70"
+          className="grid size-3/5 max-h-20 max-w-20 place-items-center rounded-2xl text-2xl font-semibold text-[#3a2a05]/70"
           style={{ background: tileColor(name) }}
         >
           {name.charAt(0)}

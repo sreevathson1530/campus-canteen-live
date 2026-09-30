@@ -42,7 +42,7 @@ export default function RegisterPage() {
 
   return (
     <>
-      <h2 className="font-display text-3xl font-extrabold">Create your account</h2>
+      <h2 className="text-2xl font-semibold">Create your account</h2>
       <p className="mt-1 text-sm text-muted-foreground">We verify your mobile with a 4-digit code before every order.</p>
 
       <form onSubmit={submit} className="mt-6 grid gap-4" noValidate>
@@ -75,7 +75,7 @@ export default function RegisterPage() {
       </form>
       <p className="mt-5 text-center text-sm text-muted-foreground">
         Already registered?{" "}
-        <Link href="/login" className="font-semibold text-leaf underline-offset-4 hover:underline">
+        <Link href="/login" className="font-semibold text-brand underline-offset-4 hover:underline">
           Sign in
         </Link>
       </p>

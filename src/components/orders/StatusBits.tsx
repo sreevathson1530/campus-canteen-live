@@ -59,7 +59,7 @@ export function StatusStepper({ order }: { order: OrderDTO }) {
           <li key={s.status} className="relative flex flex-col items-center gap-1.5 text-center" aria-current={active ? "step" : undefined}>
             <span
               className={cn(
-                "grid size-8 place-items-center rounded-full border-4 border-background text-[11px] font-extrabold transition-colors",
+                "grid size-8 place-items-center rounded-full border-4 border-background text-[11px] font-bold transition-colors",
                 done ? "bg-leaf text-paper" : active ? "bg-turmeric text-[#3a2a05] ring-4 ring-turmeric-soft" : "bg-border text-muted-foreground",
               )}
             >

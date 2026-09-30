@@ -15,9 +15,7 @@ export function ConnectionBadge({ className }: { className?: string }) {
       data-status={status}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-        status === "live" && "bg-leaf-soft text-leaf",
-        status === "reconnecting" && "bg-turmeric-soft text-[#7a5306] dark:text-turmeric",
-        status === "offline" && "bg-chili-soft text-chili",
+        "bg-secondary text-foreground",
         className,
       )}
     >
@@ -25,9 +23,9 @@ export function ConnectionBadge({ className }: { className?: string }) {
         aria-hidden
         className={cn(
           "size-2 rounded-full",
-          status === "live" && "bg-[#2fa25a]",
+          status === "live" && "bg-[#4ade80]",
           status === "reconnecting" && "animate-pulse bg-turmeric",
-          status === "offline" && "bg-chili",
+          status === "offline" && "bg-white ring-2 ring-black/40",
         )}
       />
       {LABEL[status]}

@@ -141,9 +141,9 @@ export function KitchenBoard() {
 
   function renderColumn(status: OrderStatus) {
     const list = byStatus[status] ?? [];
-    if (isLoading) return Array.from({ length: 2 }, (_, i) => <Skeleton key={i} className="h-44 rounded-3xl" />);
+    if (isLoading) return Array.from({ length: 2 }, (_, i) => <Skeleton key={i} className="h-44 rounded-2xl" />);
     if (list.length === 0) {
-      return <p className="rounded-3xl border border-dashed p-8 text-center text-sm text-muted-foreground">No orders here</p>;
+      return <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">No orders here</p>;
     }
     return list.map((o) => (
       <KitchenCard
@@ -164,12 +164,12 @@ export function KitchenBoard() {
   return (
     <div className="grid gap-4 pb-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="mr-auto font-display text-3xl font-extrabold">Kitchen</h1>
+        <h1 className="mr-auto text-2xl font-semibold">Kitchen</h1>
         <Button variant="outline" className="h-10 rounded-full" onClick={() => setDoneOpen(true)}>
           <History /> Done today
         </Button>
         {soundOn ? (
-          <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-leaf-soft px-3 text-sm font-semibold text-leaf">
+          <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-leaf-soft px-3 text-sm font-semibold text-brand">
             <Volume2 className="size-4" /> Sound on
           </span>
         ) : (
@@ -182,7 +182,7 @@ export function KitchenBoard() {
       {/* Collect box, pinned under the header on phones */}
       <form
         onSubmit={collect}
-        className="sticky top-[calc(env(safe-area-inset-top)+3.75rem)] z-20 flex gap-2 rounded-3xl border bg-card/95 p-2 shadow-sm backdrop-blur"
+        className="sticky top-[calc(env(safe-area-inset-top)+3.75rem)] z-20 flex gap-2 rounded-2xl border bg-card/95 p-2 shadow-sm backdrop-blur"
         aria-label="Collect an order by token"
       >
         <Input
@@ -231,7 +231,7 @@ export function KitchenBoard() {
       <div className="hidden gap-4 md:grid md:grid-cols-3">
         {COLUMNS.map((c) => (
           <section key={c.status} aria-label={c.label} className="grid content-start gap-3">
-            <h2 className="flex items-center gap-2 font-display text-lg font-extrabold">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
               {c.label}
               <span className="rounded-full bg-secondary px-2 text-sm tabular">{byStatus[c.status]?.length ?? 0}</span>
             </h2>
@@ -241,7 +241,7 @@ export function KitchenBoard() {
       </div>
 
       <Dialog open={!!rejecting} onOpenChange={(o) => !o && setRejecting(null)}>
-        <DialogContent className="max-w-sm rounded-3xl">
+        <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle>Reject token {rejecting?.tokenNumber}?</DialogTitle>
             <DialogDescription>The student sees your reason. Any limited stock is returned.</DialogDescription>
@@ -281,14 +281,14 @@ export function KitchenBoard() {
       <Drawer open={doneOpen} onOpenChange={setDoneOpen}>
         <DrawerContent className="mx-auto max-h-[85dvh] max-w-lg">
           <DrawerHeader className="text-left">
-            <DrawerTitle className="font-display text-2xl font-extrabold">Done today</DrawerTitle>
+            <DrawerTitle className="text-xl font-semibold">Done today</DrawerTitle>
             <DrawerDescription>The last 20 collected, cancelled and rejected orders.</DrawerDescription>
           </DrawerHeader>
           <ul className="grid gap-2 overflow-y-auto px-4 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
             {(data?.done ?? []).length === 0 && <li className="p-6 text-center text-muted-foreground">Nothing yet today.</li>}
             {(data?.done ?? []).map((o) => (
               <li key={o.id} className="flex items-center gap-3 rounded-2xl border p-3">
-                <span className="font-display text-2xl font-extrabold tabular">{o.tokenNumber}</span>
+                <span className="text-xl font-semibold tabular">{o.tokenNumber}</span>
                 <span className="min-w-0 flex-1 text-sm">
                   <span className="block font-semibold">{o.studentFirstName}</span>
                   <span className="block truncate text-muted-foreground">

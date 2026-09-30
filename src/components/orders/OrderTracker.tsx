@@ -101,16 +101,16 @@ export function OrderTracker({ id }: { id: string }) {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4">
-        <Skeleton className="h-52 rounded-3xl" />
-        <Skeleton className="h-24 rounded-3xl" />
-        <Skeleton className="h-40 rounded-3xl" />
+      <div className="mx-auto grid w-full max-w-2xl gap-4">
+        <Skeleton className="h-52 rounded-2xl" />
+        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-40 rounded-2xl" />
       </div>
     );
   }
   if (isError || !order) {
     return (
-      <div className="rounded-3xl border p-8 text-center">
+      <div className="rounded-2xl border p-8 text-center">
         <p className="font-semibold">{error instanceof ClientApiError ? error.message : "Couldn't load this order."}</p>
         <Link href="/orders" className="mt-3 inline-block font-semibold text-leaf">
           Back to my orders
@@ -123,7 +123,7 @@ export function OrderTracker({ id }: { id: string }) {
   const ready = order.status === "READY";
 
   return (
-    <div className="grid gap-4 pb-6">
+    <div className="mx-auto grid w-full max-w-2xl gap-4 pb-6">
       <div aria-live="assertive" className="sr-only">
         {announce}
       </div>
@@ -133,12 +133,12 @@ export function OrderTracker({ id }: { id: string }) {
       </Link>
 
       {ready ? (
-        <section className="relative flex flex-col items-center overflow-hidden rounded-[2rem] bg-leaf px-6 py-10 text-center text-paper">
+        <section className="relative flex flex-col items-center overflow-hidden rounded-2xl bg-leaf px-6 py-10 text-center text-paper">
           <p className="text-xs font-bold tracking-[0.2em] uppercase opacity-85">Ready for pickup</p>
           <div className="mt-6 grid size-40 animate-pulse-ring place-items-center rounded-full border-4 border-paper/30 motion-reduce:animate-none">
-            <span className="font-display text-6xl font-extrabold tabular">{order.tokenNumber}</span>
+            <span className="font-display text-6xl font-bold tabular">{order.tokenNumber}</span>
           </div>
-          <h1 className="mt-6 font-display text-2xl leading-tight font-extrabold">
+          <h1 className="mt-6 font-display text-2xl leading-tight font-bold">
             Ready, show token {order.tokenNumber}
             <br />
             at the counter
@@ -146,11 +146,11 @@ export function OrderTracker({ id }: { id: string }) {
           <p className="mt-2 text-sm opacity-85">Pay {formatRupees(order.totalPaise)} by cash or UPI when you collect.</p>
         </section>
       ) : (
-        <section className="rounded-[2rem] border bg-card p-5">
+        <section className="rounded-2xl border bg-card p-5">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-bold tracking-[0.18em] text-muted-foreground uppercase">Token</p>
-              <p className="font-display text-7xl leading-none font-extrabold tabular">{order.tokenNumber}</p>
+              <p className="font-display text-7xl leading-none font-bold tabular">{order.tokenNumber}</p>
             </div>
             <StatusChip status={order.status} />
           </div>
@@ -185,7 +185,7 @@ export function OrderTracker({ id }: { id: string }) {
         <button
           type="button"
           onClick={askNotify}
-          className="flex items-center gap-3 rounded-3xl border border-dashed p-4 text-left text-sm font-semibold hover:bg-muted"
+          className="flex items-center gap-3 rounded-2xl border border-dashed p-4 text-left text-sm font-semibold hover:bg-muted"
         >
           <Bell className="size-5 text-leaf" /> Notify me when it&apos;s ready, even if I switch apps
         </button>
@@ -196,8 +196,8 @@ export function OrderTracker({ id }: { id: string }) {
         </p>
       )}
 
-      <section className="rounded-3xl border bg-card p-5">
-        <h2 className="mb-3 font-display text-lg font-extrabold">Your order</h2>
+      <section className="rounded-2xl border bg-card p-5">
+        <h2 className="mb-3 text-base font-semibold">Your order</h2>
         <ul className="divide-y">
           {order.items.map((it, i) => (
             <li key={i} className="flex justify-between py-2">
@@ -211,7 +211,7 @@ export function OrderTracker({ id }: { id: string }) {
         {order.note && <p className="mt-3 rounded-xl bg-turmeric-soft px-3 py-2 text-sm font-semibold text-[#5e4105] dark:text-turmeric">Note: {order.note}</p>}
         <div className="mt-3 flex items-baseline justify-between border-t pt-3">
           <span className="font-semibold text-muted-foreground">Total · pay at counter</span>
-          <span className="font-display text-2xl font-extrabold tabular">{formatRupees(order.totalPaise)}</span>
+          <span className="text-xl font-semibold tabular">{formatRupees(order.totalPaise)}</span>
         </div>
       </section>
 
@@ -228,7 +228,7 @@ export function OrderTracker({ id }: { id: string }) {
       )}
 
       <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
-        <DialogContent className="max-w-sm rounded-3xl">
+        <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle>Cancel token {order.tokenNumber}?</DialogTitle>
             <DialogDescription>The kitchen hasn&apos;t started it yet. This can&apos;t be undone.</DialogDescription>
