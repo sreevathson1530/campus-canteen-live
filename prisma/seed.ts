@@ -22,8 +22,8 @@ function secret(name: string, devDefault: string): string {
 type SeedUser = { role: string; name: string; email: string; password: string; phone: string | null };
 
 const users: SeedUser[] = [
-  { role: "ADMIN", name: "Canteen Admin", email: process.env.ADMIN_EMAIL || "admin@canteen.test", password: secret("ADMIN_PASSWORD", "admin123"), phone: null },
-  { role: "STAFF", name: "Kitchen Staff", email: process.env.STAFF_EMAIL || "kitchen@canteen.test", password: secret("STAFF_PASSWORD", "kitchen123"), phone: null },
+  { role: "ADMIN", name: "Canteen Admin", email: process.env.ADMIN_EMAIL || "admin@canteen.cit", password: secret("ADMIN_PASSWORD", "admin123"), phone: null },
+  { role: "STAFF", name: "Kitchen Staff", email: process.env.STAFF_EMAIL || "kitchen@canteen.cit", password: secret("STAFF_PASSWORD", "kitchen123"), phone: null },
   ...(!isProd || process.env.SEED_DEMO_STUDENTS === "1"
     ? [
         { role: "STUDENT", name: "Asha Raman", email: "asha@canteen.test", password: "student123", phone: "+919000000001" },
@@ -43,6 +43,20 @@ function detailData(name: string) {
 }
 
 async function main() {
+  // The staff logins moved from @canteen.test to @canteen.cit: rename the existing accounts (same
+  // password, same history) rather than creating second ones.
+  for (const u of users.filter((x) => x.role !== "STUDENT" && x.email.endsWith("@canteen.cit"))) {
+    const legacy = u.email.replace(/@canteen\.cit$/, "@canteen.test");
+    const [oldUser, newUser] = await Promise.all([
+      prisma.user.findUnique({ where: { email: legacy } }),
+      prisma.user.findUnique({ where: { email: u.email } }),
+    ]);
+    if (oldUser && !newUser) {
+      await prisma.user.update({ where: { id: oldUser.id }, data: { email: u.email } });
+      console.log(`Seed: renamed ${legacy} to ${u.email}.`);
+    }
+  }
+
   let createdUsers = 0;
   for (const u of users) {
     if (await prisma.user.findUnique({ where: { email: u.email } })) continue;

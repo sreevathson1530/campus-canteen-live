@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { ArrowRight, BellRing, Clock3, Flame, MapPin, ReceiptText, ShieldCheck, Timer, UtensilsCrossed, Wallet } from "lucide-react";
+import { ArrowRight, BellRing, Flame, ReceiptText, ShieldCheck, Timer, UtensilsCrossed, Wallet } from "lucide-react";
 import type { MenuSnapshot } from "@/lib/menu/service";
 import type { MenuItemDTO } from "@/lib/realtime/events";
 import type { Pulse } from "@/lib/pulse";
@@ -188,47 +188,6 @@ export function HomeScreen({ menu, initialPulse, firstName }: { menu: MenuSnapsh
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-4 bg-[#1d1d1f] text-white/80">
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 sm:grid-cols-3 sm:px-6">
-          <div>
-            <Wordmark onBrand className="text-base" />
-            <p className="mt-3 max-w-xs text-sm">Freshly made fast food and coffee, ready when you arrive.</p>
-          </div>
-          <div className="text-sm">
-            <p className="font-semibold text-white">Visit us</p>
-            <p className="mt-3 flex items-center gap-2">
-              <Clock3 className="size-4 shrink-0" /> {menu.settings.openingHours}
-            </p>
-            <p className="mt-2 flex items-center gap-2">
-              <MapPin className="size-4 shrink-0" /> {menu.settings.location}
-            </p>
-          </div>
-          <div className="text-sm">
-            <p className="font-semibold text-white">Quick links</p>
-            <ul className="mt-3 grid gap-2">
-              <li>
-                <Link href={orderHref} className="hover:text-white hover:underline">
-                  Order now
-                </Link>
-              </li>
-              <li>
-                <Link href={signedIn ? "/orders" : "/login"} className="hover:text-white hover:underline">
-                  {signedIn ? "My orders" : "Sign in"}
-                </Link>
-              </li>
-              <li>
-                <Link href="/credits" className="hover:text-white hover:underline">
-                  Photo credits
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <p className="border-t border-white/10 px-4 py-4 pb-[max(env(safe-area-inset-bottom),1rem)] text-center text-xs text-white/60">
-          © {menu.settings.canteenName}
-        </p>
-      </footer>
     </div>
   );
 }

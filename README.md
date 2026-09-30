@@ -32,8 +32,8 @@ That's all. `npm run setup` is safe to run again (the seed upserts).
 
 | Role    | Email                  | Password     | Mobile          |
 | ------- | ---------------------- | ------------ | --------------- |
-| Admin   | `admin@canteen.test`   | `admin123`   |                 |
-| Staff   | `kitchen@canteen.test` | `kitchen123` |                 |
+| Admin   | `admin@canteen.cit`   | `admin123`   |                 |
+| Staff   | `kitchen@canteen.cit` | `kitchen123` |                 |
 | Student | `asha@canteen.test`    | `student123` | +91 90000 00001 |
 | Student | `ravi@canteen.test`    | `student123` | +91 90000 00002 |
 | Student | `meena@canteen.test`   | `student123` | +91 90000 00003 |
@@ -60,8 +60,8 @@ production if `OTP_DEV_CODE` is set.
 3. Allow Node.js through the firewall when Windows asks (Private networks).
 4. On phones, open `http://192.168.1.20:3000`:
    - **Student phone**: register (or log in as Asha) and order.
-   - **Kitchen phone**: log in as `kitchen@canteen.test`, tap **Enable sound**.
-   - **Admin** (phone or laptop): `admin@canteen.test` → live dashboard.
+   - **Kitchen phone**: log in as `kitchen@canteen.cit`, tap **Enable sound**.
+   - **Admin** (phone or laptop): `admin@canteen.cit` → live dashboard.
 5. Optional: `npm run simulate -- --kitchen` fills the board with live traffic.
 
 ### Real order codes by email (free): Gmail

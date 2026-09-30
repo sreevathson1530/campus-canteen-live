@@ -135,7 +135,7 @@ async function main() {
   for (const email of ["asha@canteen.test", "ravi@canteen.test", "meena@canteen.test"]) {
     students.push(await login(email, "student123"));
   }
-  const staff = KITCHEN ? await login("kitchen@canteen.test", "kitchen123") : null;
+  const staff = KITCHEN ? await login("kitchen@canteen.cit", "kitchen123") : null;
 
   let placed = 0;
   let turn = 0;

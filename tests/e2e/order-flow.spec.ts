@@ -33,7 +33,7 @@ test("student orders with an OTP, kitchen prepares it, student sees READY and th
   await student.waitForURL("**/menu");
   await expect(student.getByRole("status").filter({ hasText: "Live" })).toBeVisible();
 
-  await login(kitchen, "kitchen@canteen.test", "kitchen123", "/kitchen");
+  await login(kitchen, "kitchen@canteen.cit", "kitchen123", "/kitchen");
 
   // Build a cart and check out with the code.
   await student.getByRole("button", { name: "Add Classic Veg Burger" }).first().click();

@@ -13,8 +13,8 @@ const SHOW_DEMO = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBL
 
 const DEMO = [
   ["Student", "asha@canteen.test", "student123"],
-  ["Kitchen", "kitchen@canteen.test", "kitchen123"],
-  ["Admin", "admin@canteen.test", "admin123"],
+  ["Kitchen", "kitchen@canteen.cit", "kitchen123"],
+  ["Admin", "admin@canteen.cit", "admin123"],
 ] as const;
 
 function LoginForm() {
