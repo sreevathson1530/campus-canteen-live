@@ -306,7 +306,7 @@ export function MenuAdmin() {
                     onClick={() => setDraft(toDraft(i, c.id))}
                   >
                     <span className="flex items-center gap-1.5 font-bold">
-                      <VegMark isVeg={i.isVeg} /> <span className="truncate">{i.name}</span>
+                      <VegMark isVeg={i.isVeg} /> <span className="line-clamp-2 leading-tight">{i.name}</span>
                     </span>
                     <span className="block text-xs text-muted-foreground">
                       {formatRupees(i.pricePaise)} · {i.stock === null ? "Unlimited" : `${i.stock} left`}

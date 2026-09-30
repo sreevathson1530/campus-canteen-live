@@ -66,7 +66,7 @@ function StockRow({ item }: { item: MenuItemDTO }) {
     <li className={cn("flex items-center gap-3 rounded-2xl border bg-card p-3", low && "border-turmeric bg-turmeric-soft/40", !item.isAvailable && "opacity-70")}>
       <DishImage name={item.name} src={item.imageUrl} still={stillFor(item.modelKey)} className="size-12 shrink-0 rounded-xl" />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-bold">{item.name}</p>
+        <p className="line-clamp-2 leading-tight font-semibold">{item.name}</p>
         <p className="text-xs text-muted-foreground">
           {formatRupees(item.pricePaise)}
           {low && <span className="ml-2 font-bold text-[#7a5306] dark:text-turmeric">Low stock</span>}

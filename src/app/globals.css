@@ -111,6 +111,12 @@
 
 
 @layer base {
+  /* A grid with no column utility gets one column capped at its container's width. The CSS default
+     (an auto column) grows to fit the widest row and pushed whole pages wider than a phone screen.
+     Any grid-cols-* utility still wins, because utilities outrank the base layer. */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   * {
     @apply border-border outline-ring/50;
   }
