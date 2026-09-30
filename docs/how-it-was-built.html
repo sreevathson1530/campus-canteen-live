@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>QuickCanteen: How It Was Built</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1f; font-size: 10.5pt; line-height: 1.5; margin: 0; }
+  h1 { font-size: 26pt; margin: 0 0 4px; letter-spacing: -0.5px; }
+  h2 { font-size: 15pt; margin: 22px 0 8px; padding-bottom: 5px; border-bottom: 2px solid #d2112c; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; break-after: avoid; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 8px; padding-left: 20px; }
+  li { margin-bottom: 3px; }
+  code { font-family: Consolas, monospace; font-size: 9.2pt; background: #f2f2f4; padding: 1px 4px; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 9.6pt; break-inside: avoid; }
+  th { text-align: left; background: #d2112c; color: #fff; padding: 6px 8px; font-weight: 600; }
+  td { padding: 6px 8px; border-bottom: 1px solid #e5e5e8; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafb; }
+  .cover { background: linear-gradient(135deg, #d2112c, #a90d23); color: #fff; border-radius: 14px; padding: 34px 30px; margin-bottom: 18px; }
+  .cover p { color: rgba(255,255,255,.9); margin: 0; }
+  .cover .meta { margin-top: 18px; font-size: 9.5pt; }
+  .logo { display: inline-grid; place-items: center; width: 46px; height: 46px; border-radius: 12px; background: #fff; color: #d2112c; font-weight: 800; font-size: 24pt; margin-bottom: 14px; }
+  .note { background: #fdecef; border-left: 4px solid #d2112c; padding: 9px 12px; border-radius: 0 8px 8px 0; margin: 8px 0 12px; break-inside: avoid; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 12px; font-size: 9.4pt; break-inside: avoid; }
+  .flow span { border: 1.5px solid #d2112c; border-radius: 8px; padding: 6px 9px; background: #fff; font-weight: 600; }
+  .flow i { color: #d2112c; font-style: normal; font-weight: 700; }
+  .arch { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 12px; break-inside: avoid; }
+  .arch div { border: 1.5px solid #e5e5e8; border-radius: 10px; padding: 9px; font-size: 9.2pt; }
+  .arch b { display: block; color: #d2112c; margin-bottom: 2px; }
+  .arch .wide { grid-column: 1 / -1; background: #fdecef; border-color: #d2112c; text-align: center; }
+  .small { font-size: 9.2pt; color: #6e6e73; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="logo">C</div>
+  <h1>QuickCanteen</h1>
+  <p style="font-size:13pt">How the food-ordering website and Android app were built</p>
+  <p class="meta">Live site: https://campus-canteen-live.vercel.app &nbsp;·&nbsp; Code: github.com/sreevathson1530/campus-canteen-live<br>Built 23 to 30 September 2026 &nbsp;·&nbsp; 27 commits &nbsp;·&nbsp; 285 automated tests</p>
+</div>
+
+<h2>1. What it is</h2>
+<p>QuickCanteen lets customers order food from their phone, confirm the order with a 4-digit code sent to their email, watch the order move from <b>Placed</b> to <b>Preparing</b> to <b>Ready</b> in real time, and collect it at the counter with a token number. The kitchen sees every order the moment it is placed. The owner gets an admin panel with live orders, earnings, the menu, stock, bills and users. When an order is collected, a bill is saved and emailed to the customer.</p>
+<p>It has three kinds of user, each with its own screens:</p>
+<table>
+  <tr><th style="width:18%">Role</th><th style="width:32%">Signs in with</th><th>What they can do</th></tr>
+  <tr><td>Customer</td><td>Their own email, registered on the site</td><td>Browse the menu, add to cart, confirm with a code, track the order, see past orders and bills, order again</td></tr>
+  <tr><td>Kitchen</td><td><code>kitchen@canteen.cit</code></td><td>See incoming orders, tap Start, Ready and Collect, reject an order, manage stock, open or close the canteen</td></tr>
+  <tr><td>Admin</td><td><code>admin@canteen.cit</code></td><td>Everything the kitchen can do, plus the dashboard, all orders with earnings, menu editing, bills, users and settings</td></tr>
+</table>
+
+<h2>2. The technology used</h2>
+<table>
+  <tr><th style="width:24%">Part</th><th style="width:30%">Technology</th><th>Why</th></tr>
+  <tr><td>Website and server</td><td>Next.js 16, React 19, TypeScript</td><td>One project holds both the pages and the server code, so there is one thing to deploy</td></tr>
+  <tr><td>Styling</td><td>Tailwind CSS 4, shadcn/ui components</td><td>Consistent design built from a small set of colour and spacing rules</td></tr>
+  <tr><td>Database</td><td>PostgreSQL on Neon (SQLite on the developer's PC), accessed with Prisma 6</td><td>Reliable storage with transactions, which matter for stock and token numbers</td></tr>
+  <tr><td>Live updates</td><td>WebSockets, with Upstash Redis passing messages between servers</td><td>Orders appear on the kitchen screen and the customer's tracker without refreshing</td></tr>
+  <tr><td>Login</td><td>Passwords hashed with bcrypt; a signed session cookie (JWT) lasting 7 days</td><td>Passwords are never stored in readable form</td></tr>
+  <tr><td>Email</td><td>Gmail's mail server through nodemailer</td><td>Free, needs no domain, delivers to any address (about 500 emails a day)</td></tr>
+  <tr><td>Hosting</td><td>Vercel (Singapore region)</td><td>Free tier; every push to GitHub deploys automatically</td></tr>
+  <tr><td>Android app</td><td>Capacitor, built by GitHub Actions</td><td>Wraps the live site in an installable app without an app-store fee</td></tr>
+  <tr><td>Tests</td><td>Vitest (unit and integration), Playwright (real browser)</td><td>Catches mistakes before they reach the live site</td></tr>
+</table>
+
+<h2>3. How the pieces fit together</h2>
+<div class="arch">
+  <div class="wide"><b>Customer phone · Kitchen phone · Admin laptop · Android app</b>all open the same website</div>
+  <div><b>Vercel</b>Runs the pages and 30 server endpoints (<code>/api/...</code>)</div>
+  <div><b>Neon Postgres</b>Users, menu, orders, bills, settings</div>
+  <div><b>Upstash Redis</b>Relays live events between server instances; rate limits</div>
+  <div><b>Gmail</b>Sends order codes and bills</div>
+</div>
+<p>The backend is not a separate program. It lives in the same project: the endpoints are in <code>src/app/api/</code>, the rules behind them in <code>src/lib/</code>, and the database structure in <code>prisma/</code>.</p>
+
+<h2>4. How an order works, step by step</h2>
+<div class="flow"><span>Add to cart</span><i>→</i><span>Place order</span><i>→</i><span>Code by email</span><i>→</i><span>Placed</span><i>→</i><span>Preparing</span><i>→</i><span>Ready</span><i>→</i><span>Collected + bill</span></div>
+<ol>
+  <li><b>Cart.</b> The cart is kept on the customer's phone. Nothing is reserved until the order is placed.</li>
+  <li><b>Code.</b> Tapping Place order sends a random 4-digit code to the customer's email. The code lasts 5 minutes, allows 5 wrong tries, and can be re-sent after 30 seconds. This stops prank orders.</li>
+  <li><b>Placing.</b> Once the code is correct, the server does everything in one database transaction: it checks the canteen is open, checks each dish is available, takes stock, gives the next token number for the day (starting at 101), and saves the order. If anything fails, nothing is saved.</li>
+  <li><b>Kitchen.</b> The order appears instantly on the kitchen board. Staff tap <b>Start</b>, then <b>Ready</b>. The customer's phone updates each time and plays a chime at Ready.</li>
+  <li><b>Collection.</b> Staff type the token number and tap <b>Collect</b>. In the same transaction a bill is created as a permanent copy of the order (name, mobile, dishes, prices, total, times). The bill is then emailed to the customer.</li>
+</ol>
+<div class="note"><b>Why the order is safe against mistakes.</b> Stock can never go below zero even if ten people order the last three items at the same moment: exactly three succeed. A double tap on Place order creates one order, not two. Two staff tapping the same order at once cannot both succeed; the second is told it was already updated.</div>
+
+<h2>5. How it was built, in order</h2>
+<table>
+  <tr><th style="width:5%">#</th><th style="width:25%">Stage</th><th>What was done</th></tr>
+  <tr><td>1</td><td>Plan</td><td>Read the requirements document, wrote a design and an implementation plan, and got approval before writing code. Decisions agreed up front: mobile-first for every role, no counter TV, a code before every order, a bill on collection.</td></tr>
+  <tr><td>2</td><td>Foundation</td><td>Project set up with the database structure, login and registration, and the live connection.</td></tr>
+  <tr><td>3</td><td>Ordering</td><td>Menu, cart, order placement with stock and token numbers, the order tracker and the list of past orders.</td></tr>
+  <tr><td>4</td><td>Kitchen and admin</td><td>Kitchen board with Start, Ready and Collect; stock screen; admin dashboard, menu editor, users, settings and bills.</td></tr>
+  <tr><td>5</td><td>Going online</td><td>Deployed to Vercel with Neon and Upstash. The live-update system was rewritten for Vercel (see section 8).</td></tr>
+  <tr><td>6</td><td>Richer content</td><td>Public home page, menu search and filters, dish details (spice, calories, ingredients, allergens, "goes well with"), Order again, dashboard trends.</td></tr>
+  <tr><td>7</td><td>Codes by email</td><td>Order codes moved from SMS to email through Gmail, because free SMS needed an Android phone kept online.</td></tr>
+  <tr><td>8</td><td>Admin orders and bills by email</td><td>Admin → Orders with earnings for today, this week and this month; bills emailed on collection with a Resend button.</td></tr>
+  <tr><td>9</td><td>Redesign and new menu</td><td>The look was rebuilt in the style of mainstream food-ordering sites and the menu replaced with 30 fast-food and café items.</td></tr>
+  <tr><td>10</td><td>App</td><td>Made installable from the browser, then packaged as an Android APK built in the cloud.</td></tr>
+  <tr><td>11</td><td>Fixes</td><td>Footer removed, staff logins renamed to <code>@canteen.cit</code>, and pages that ran wider than a phone screen fixed.</td></tr>
+</table>
+
+<h2>6. What is stored in the database</h2>
+<table>
+  <tr><th style="width:22%">Table</th><th>What it holds</th></tr>
+  <tr><td>User</td><td>Name, email, mobile number, hashed password and role. One account per email and per mobile number.</td></tr>
+  <tr><td>Category, MenuItem</td><td>The menu: name, price, photo, veg or non-veg, stock, prep time, spice level, calories, ingredients, allergens, badges and pairings. Removed dishes are archived, not deleted, so old orders still show them.</td></tr>
+  <tr><td>Order, OrderItem</td><td>Each order with its token, status, total and times; each line copies the dish name and price at the moment of ordering, so later price changes do not alter past orders.</td></tr>
+  <tr><td>DailyCounter</td><td>The last token number given out each day.</td></tr>
+  <tr><td>OtpChallenge</td><td>Order codes, stored only as a keyed hash, with expiry and attempt count.</td></tr>
+  <tr><td>Bill, BillLine</td><td>The permanent bill made at collection, and when it was emailed.</td></tr>
+  <tr><td>Settings</td><td>Name, open or closed, closed message, minutes per order, opening hours and location.</td></tr>
+</table>
+<p>Money is stored in paise (₹50 is saved as 5000) to avoid rounding errors. Times are stored in UTC and shown in Indian time.</p>
+
+<h2>7. Security and abuse protection</h2>
+<ul>
+  <li>Passwords are hashed with bcrypt. Order codes and tokens are stored only as keyed hashes, so a database leak does not reveal usable codes.</li>
+  <li>The session cookie cannot be read by page scripts (<code>httpOnly</code>) and every server endpoint checks the user's role itself.</li>
+  <li>Limits: 5 codes an hour per mobile number, 60 an hour per network address, and a 30-second wait between codes. Login and registration are rate-limited too.</li>
+  <li>Kitchen staff see a customer's first name and a masked phone number only. The full number is visible to the customer and the admin.</li>
+  <li>Passwords and keys are never in the code. They are kept as hidden settings on Vercel and as private secrets on GitHub.</li>
+</ul>
+
+<h2>8. How live updates work</h2>
+<p>Each open page keeps a WebSocket connection to the server and is placed in "rooms": everyone is in <code>public</code>, each customer is in a private room, staff are in <code>kitchen</code>, admins in <code>admin</code>. When something changes, the server sends an event only to the rooms that should see it, and only after the database has saved the change.</p>
+<p>On Vercel, requests are handled by many short-lived server instances, and a connection is tied to one of them. So every event is first published to Redis, and every instance forwards it to its own connected phones. If a phone loses its connection, it reconnects by itself (waiting 1 to 30 seconds) and reloads the latest data, so nothing is missed.</p>
+
+<h2>9. The design journey</h2>
+<p>The look went through three versions, guided by feedback:</p>
+<ol>
+  <li><b>First version:</b> a warm "banana leaf and turmeric" theme with a heavy display font and interactive 3D models of each dish built in Three.js.</li>
+  <li><b>Simplified:</b> the 3D views and heavy styling were removed when the request became "simple, no more 3D".</li>
+  <li><b>Final:</b> rebuilt in the style of Domino's and Thalappakatti-type ordering sites: a red brand bar, a light page, one typeface, category buttons with photos that follow the scroll, dish rows with a photo and an <b>ADD</b> button that becomes a − 1 + counter, and a cart bar at the bottom. On larger screens the rows become a grid of cards.</li>
+</ol>
+<p>The menu was replaced at the same time: pizzas, burgers, sides, wraps and sandwiches, coffee and drinks, and desserts. All 30 photos are freely licensed images from Wikimedia Commons, chosen by eye to avoid brand logos, cropped to one shape, and credited on the site's Credits page as their licences require.</p>
+
+<h2>10. Putting it online</h2>
+<ul>
+  <li>The code is on GitHub. Every push to the <code>main</code> branch makes Vercel build and publish a new version automatically, usually in about two minutes.</li>
+  <li>During each build the database is brought up to date: structure changes are applied, and the starter data (staff accounts and the menu) is created if missing. Existing data and any changes made in the admin panel are never overwritten.</li>
+  <li>The database (Neon) and Redis (Upstash) were added from Vercel's marketplace on their free plans, in the same Singapore region as the server to keep it fast.</li>
+  <li>Email uses a Gmail account with an <b>app password</b>, a separate 16-letter password made only for this app. It is saved on Vercel as a hidden setting.</li>
+</ul>
+
+<h2>11. The Android app</h2>
+<p>There are two ways to have it as an app, and both show the same live site:</p>
+<ul>
+  <li><b>Install from the browser.</b> The site describes itself as an app (name, icon, colours), so Chrome offers "Install app" and iPhone's Safari offers "Add to Home Screen".</li>
+  <li><b>Android APK.</b> A small Capacitor project in the <code>mobile/</code> folder wraps the site. This PC did not have enough free memory to build it, so GitHub builds it in the cloud, signs it with a private key, and publishes it as a download. Rebuilds happen automatically when the <code>mobile/</code> folder changes.</li>
+</ul>
+<div class="note"><b>The signing key matters.</b> It is kept in <code>C:\Users\sreev\Projects\campus-canteen-keys\</code> and as private GitHub secrets. Every future update of the app must be signed with the same key, so keep a private backup and never share it.</div>
+<p>Because the app opens the live site, website updates appear in the app straight away with nothing to reinstall. It needs an internet connection.</p>
+
+<h2>12. How it was tested</h2>
+<table>
+  <tr><th style="width:26%">Kind</th><th>What it checks</th></tr>
+  <tr><td>Unit tests</td><td>Small rules on their own: input checking, money and time formatting, which status changes are allowed (222 cases), email masking and content.</td></tr>
+  <tr><td>Integration tests</td><td>Real database operations: ten simultaneous orders on three items of stock, double-tap protection, code limits and expiry, bills, earnings, search, and the live-update rooms.</td></tr>
+  <tr><td>Same tests on PostgreSQL</td><td>The integration tests are run again on a real PostgreSQL database, the kind used in production.</td></tr>
+  <tr><td>Browser tests</td><td>A real Chrome plays a customer and a kitchen at once through a whole order, and checks every page for every role fits a 360-pixel phone screen.</td></tr>
+  <tr><td>Live checks</td><td>After each deploy the live site was checked directly: pages, logins, the menu, and whether it can sign in to Gmail.</td></tr>
+</table>
+<p>There are 285 unit and integration tests and 4 browser tests. They are run before each change is published.</p>
+
+<h2>13. Problems met and how they were solved</h2>
+<table>
+  <tr><th style="width:34%">Problem</th><th>What fixed it</th></tr>
+  <tr><td>Live updates did not work on Vercel</td><td>The first version used Socket.IO on one long-running server. Vercel has no such server, so it was rewritten with plain WebSockets and Redis passing events between instances.</td></tr>
+  <tr><td>Order codes never arrived</td><td>The site was in test mode, printing codes to the log. Free SMS needed a phone kept online, and free email services need an owned domain. Gmail's own mail server solved both.</td></tr>
+  <tr><td>Gmail rejected the first password</td><td>The app password was not accepted for the account. A new one was created and tested before being saved.</td></tr>
+  <tr><td>Editing one field of a dish reset its stock</td><td>A quirk in the input-checking library re-applied default values on partial updates. The update rule was rebuilt without defaults, with a test to keep it fixed.</td></tr>
+  <tr><td>Pages wider than the phone screen</td><td>Found twice. First, hidden accessibility labels inside a side-scrolling row escaped its edges. Later, three admin pages stretched to their widest row. Both were fixed at the cause, and a test now checks every page.</td></tr>
+  <tr><td>The PC ran out of memory</td><td>Builds and browser tests crashed when memory was full. Heavy work (the Android build) was moved to GitHub's servers.</td></tr>
+  <tr><td>Wrong photos from search</td><td>Automatic image search returned packaging, logos and the wrong dishes. Each photo was reviewed by eye and replaced where needed.</td></tr>
+</table>
+
+<h2>14. Where things are, and how to change them</h2>
+<table>
+  <tr><th style="width:36%">To do this</th><th>Go here</th></tr>
+  <tr><td>Change a dish, price, photo or stock</td><td>Sign in as admin → Menu (or Kitchen → Stock). No code change needed.</td></tr>
+  <tr><td>Mark an order ready or collected</td><td>Kitchen screen: Start → Ready → Collect.</td></tr>
+  <tr><td>See all orders and earnings</td><td>Admin → Orders.</td></tr>
+  <tr><td>Open or close the canteen, change hours</td><td>Kitchen → Stock, or Admin → Settings.</td></tr>
+  <tr><td>Look at the raw data</td><td>vercel.com → the project → Storage → Neon → Tables.</td></tr>
+  <tr><td>See server errors</td><td>vercel.com → the project → Logs.</td></tr>
+  <tr><td>Change how pages look</td><td><code>src/components/</code> (screens) and <code>src/app/globals.css</code> (colours).</td></tr>
+  <tr><td>Change server rules</td><td><code>src/lib/</code>, for example <code>orders/service.ts</code>.</td></tr>
+  <tr><td>Read why each decision was made</td><td><code>DECISIONS.md</code> in the project.</td></tr>
+</table>
+<p class="small">Passwords are deliberately not printed in this document. Keep them somewhere private.</p>
+
+</body>
+</html>
