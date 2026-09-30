@@ -1,0 +1,7 @@
+{
+  "appId": "com.quickcanteen.app",
+  "appName": "QuickCanteen",
+  "webDir": "www",
+  "server": { "url": "https://campus-canteen-live.vercel.app", "cleartext": false },
+  "android": { "backgroundColor": "#d2112c" }
+}

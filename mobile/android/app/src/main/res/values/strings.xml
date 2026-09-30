@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">QuickCanteen</string>
+    <string name="title_activity_main">QuickCanteen</string>
+    <string name="package_name">com.quickcanteen.app</string>
+    <string name="custom_url_scheme">com.quickcanteen.app</string>
+</resources>
